@@ -1,0 +1,36 @@
+- name: Prohibit password authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+    state: present
+  notify: restart ssh
+
+- name: Prohibit root login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PermitRootLogin'
+    line: 'PermitRootLogin no'
+    state: present
+  notify: restart ssh
+
+- name: Install fail2ban
+  dnf:
+    name: fail2ban
+    state: latest
+
+- name: Copy all fail2ban jail conf
+  copy:
+    src: "{{ item }}"
+    dest: /etc/fail2ban/jail.d/
+    owner: root
+    group: root
+    mode: 0644
+  with_fileglob:
+    - fail2ban_jail/*
+
+- name: Enable and restart fail2ban
+  service:
+    name: fail2ban
+    state: restarted
+    enabled: yes

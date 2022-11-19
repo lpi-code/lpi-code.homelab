@@ -1,0 +1,119 @@
+
+
+network --activate --device={{ net_interface_name }} --ip=auto --bootproto=dhcp --onboot=yes
+network --hostname={{ machine_hostname }}
+
+# 1. Installer option
+cmdline
+eula --agreed
+firstboot --enabled
+reboot --eject
+
+# 2. Disk partitioning
+ignoredisk --only-use={{ system_disk }}
+clearpart --all --initlabel --disklabel gpt
+zerombr
+autopart
+
+# 3. Bootloader configuration
+bootloader --location=mbr --driveorder={{ system_disk }} --append="crashkernel=auto rhgb quiet" --timeout=10 --boot-drive={{ system_disk }}
+
+# 4. Network configuration
+# Firewall configuration
+firewall --enabled --service ssh
+firewall --enabled --service dhcpv6-client
+firewall --enabled --service dhcpv4-client
+{% if cockpit_enabled %}
+firewall --enabled --port 9090/tcp
+{% endif %}
+
+url --url {{ ROCKY_LINUX_BASE_OS_URL }}
+
+#5. Locale and timezone
+lang C.UTF-8
+keyboard fr
+timezone --utc Europe/Paris
+timesource --ntp-server time.cloudflare.com
+
+#7. Security
+selinux --enforcing
+rootpw --plaintext foobar
+
+
+
+
+
+
+%packages --inst-langs en_US
+{% for package in default_packages %}
+{{ package }}
+{% endfor %}
+bash-completion
+bind-utils
+glibc-minimal-langpack
+man-pages
+NetworkManager-config-server
+policycoreutils-python-utils
+prefixdevname
+psmisc
+python3
+python3-libselinux
+setools-console
+tar
+{% if cockpit_enabled %}
+cockpit
+{% endif %}
+
+# BIOS/UEFI cross-compatible image packages
+efibootmgr
+%end
+
+
+
+%post
+
+# Users
+useradd -m -G wheel -s /bin/zsh {{ new_user_name }}
+# Create a new user with sudo privileges and password authentication
+echo {{ new_user_name }}:{{ new_user_password }} | chpasswd
+
+# Networking
+sed -i -e '/cockpit/d' /etc/firewalld/zones/public.xml
+rm -f /etc/firewalld/zones/public.xml.old
+
+# ssh/d
+#sed -Ei -e 's,^(#|)PermitRootLogin .*,PermitRootLogin yes,' /etc/ssh/sshd_confi
+mkdir -m 0700 -p /home/{{new_user_name}}/.ssh
+echo "{{ssh_rsa_pub}}" > /home/{{new_user_name}}/.ssh/authorized_keys
+restorecon -R /root/.ssh > /dev/null 2>&1
+chown -R {{new_user_name}}:{{new_user_name}} /home/{{new_user_name}}/.ssh
+
+# Packages trimming
+echo "%_install_langs en_US" > /etc/rpm/macros.install-langs-conf
+
+# Services
+{% if cockpit_enabled %}
+systemctl enable --now cockpit.socket
+{% endif %}
+systemctl enable --now sshd
+
+# Watchdog
+sed -i -e 's,^#RuntimeWatchdogSec=.*,RuntimeWatchdogSec=60s,' /etc/systemd/system.conf
+
+# Clear caches, files, and logs
+/bin/rm -rf /root/* {{ temp_dir }}/* {{ temp_dir }}/.[a-zA-Z]* /var{{ temp_dir }}/*
+/bin/rm -rf /etc/*- /etc/*.bak /etc/*~ /etc/sysconfig/*~
+/bin/rm -rf /var/cache/dnf/* /var/cache/yum/* /var/log/rhsm/*
+/bin/rm -rf /var/lib/dnf/* /var/lib/yum/repos/* /var/lib/yum/yumdb/*
+/bin/rm -rf /var/lib/NetworkManager/* /var/lib/unbound/*.key
+/bin/rm -rf /var/log/*debug /var/log/anaconda /var/log/dmesg*
+/bin/rm -rf /var/lib/cloud/* /var/log/cloud-init*.log
+/bin/rm -rf /var/lib/authselect/backups/*
+#truncate -s 0 /var/log/cron /var/log/tuned/tuned.log
+#truncate -s 0 /var/log/audit/audit.log /var/log/messages /var/log/secure
+#truncate -s 0 /var/log/btmp /var/log/wtmp /var/log/lastlog
+
+
+
+# Ensure everything is written to the disk
+%end

@@ -1,0 +1,50 @@
+# - name: Get disks with 3 tb and more
+#   shell: "for file in $(/bin/ls /dev/disk/by-id | grep {{ disk_model | }} | grep ata); do printf -- "%s\n" "$(readlink -f /dev/disk/by-id/$file)"; done"
+#   register: disks
+
+- name: Gather disks facts
+  setup:
+    gather_subset:
+      - devices
+
+- name: Set disks facts
+  set_fact:
+    main_disks: "{{ ansible_facts.devices | dict2items | selectattr('value.removable', 'equalto', '0') | selectattr('value.model', 'equalto', disk_model_mirror_main) | list | map(attribute='key') | list }}"
+    secondary_disks: "{{ ansible_facts.devices | dict2items | selectattr('value.removable', 'equalto', '0') | selectattr('value.model', 'in', disk_model_secondary ) | list | map(attribute='key') | list }}"
+- name: check that zfs is installed
+  shell: "rpm -qa | grep zfs | wc -l"
+  register: zfs_installed
+
+- name: Set zfs_installed fact
+  set_fact:
+    zfs_installed: "{{ zfs_installed.stdout | int >= 1 }}"
+
+- name: "Checking if main_datastore is created"
+  shell: "zpool list | grep main_datastore | wc -l"
+  register: main_datastore_created
+  when: zfs_installed == true
+
+- name: Checking if secondary_datastore is created
+  shell: "zpool list | grep secondary_datastore | wc -l"
+  register: secondary_datastore_created
+  when: zfs_installed == true
+
+- name: Set main_datastore_created fact
+  set_fact:
+    main_datastore_created: "{{false if not zfs_installed else ( main_datastore_created.stdout | int >= 1) }}"
+    secondary_datastore_created: "{{false if not zfs_installed else ( secondary_datastore_created.stdout | int >= 1) }}"
+
+- name: Check if main_datastore is correctly mounted
+  shell: "mount | grep /mnt/main_datastore | wc -l"
+  register: main_datastore_mounted
+  when: main_datastore_created == true
+
+- name: Check if secondary_datastore is correctly mounted
+  shell: "mount | grep /mnt/secondary_datastore | wc -l"
+  register: secondary_datastore_mounted
+  when: secondary_datastore_created == true
+
+- name: Set correctly_mounted fact
+  set_fact:
+    main_datastore_correctly_mounted: "{{false if not main_datastore_created else ( main_datastore_mounted.stdout | int >= 1) }}"
+    secondary_datastore_correctly_mounted: "{{false if not secondary_datastore_created else ( secondary_datastore_mounted.stdout | int >= 1) }}"

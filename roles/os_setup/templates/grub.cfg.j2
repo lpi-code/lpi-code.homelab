@@ -1,0 +1,27 @@
+set default="1"
+
+function load_video {
+  insmod efi_gop
+  insmod efi_uga
+  insmod video_bochs
+  insmod video_cirrus
+  insmod all_video
+}
+
+load_video
+set gfxpayload=keep
+insmod gzio
+insmod part_gpt
+insmod ext2
+
+set timeout=20
+### END /etc/grub.d/00_header ###
+
+#search --no-floppy --set=root -l 'AlmaLinux-9-0-x86_64-dvd'
+
+### BEGIN /etc/grub.d/10_linux ###
+menuentry 'Install RockyLinux Automatically' --class fedora --class gnu-linux --class gnu --class os {
+	linuxefi /images/pxeboot/vmlinuz inst.ks=cdrom:/{{KS_file_name}} inst.stage2=hd:LABEL={{iso_label}} quiet splash
+	initrdefi /images/pxeboot/initrd.img
+}
+}

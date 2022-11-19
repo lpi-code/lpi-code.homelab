@@ -1,0 +1,86 @@
+- name: Install ufw
+  dnf:
+    name: ufw
+    state: latest
+
+- name: Disblae ufw
+  ufw:
+    state: disabled
+
+- name: Reset ufw
+  ufw:
+    state: reset
+
+- name: Allow ssh
+  ufw:
+    rule: allow
+    name: ssh
+
+- name: Allow http and https
+  ufw:
+    rule: allow
+    name: "WWW Full"
+
+- name: Allow cockpit on lan Ipv4
+  ufw:
+    rule: allow
+    port: 9090
+    proto: tcp
+    from_ip: 192.168.0.254/24
+
+- name: Allow cockpit on lan Ipv6
+  ufw:
+    rule: allow
+    port: 9090
+    proto: tcp
+    from_ip: fe80::/64
+
+- name: Enable dlna for local network IPv4
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: udp
+    to_ip: 192.168.0.0/24
+  with_items:
+    - 1900
+    - 5353
+
+- name: Enable dlna for local network IPv6
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: udp
+    to_ip: fe80::/64
+  with_items:
+    - 1900
+    - 5353
+
+- name: Enable samba for local network IPv4
+  ufw:
+    rule: allow
+    name: CIFS
+    to_ip: 192.168.0.0/24
+  
+- name: Enable samba for local network IPv6
+  ufw:
+    rule: allow
+    name: CIFS
+    to_ip: fe80::/64
+
+- name: Enable AFP (Apple File Protocol) for local network
+  ufw:
+    rule: allow
+    to_ip: 192.168.0.0/24
+    port: 548
+    proto: tcp
+
+- name: Enable AFP (Apple File Protocol) for local network Ipv6
+  ufw:
+    rule: allow
+    to_ip: fe80::/64
+    port: 548
+    proto: tcp
+
+- name: Enable ufw
+  ufw:
+    state: enabled

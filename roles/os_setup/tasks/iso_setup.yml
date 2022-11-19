@@ -1,0 +1,62 @@
+- name: Get xorrisofs command for repacking boot iso
+  shell: "xorriso \
+          -indev {{ ISO_source_path }} \
+          -report_el_torito plain \
+          -report_system_area as_mkisofs | grep '^-' |  tr '\n' ' '"
+  register: xorrisofs_raw
+  delegate_to: localhost
+
+- name: Get xorrisofs command for repacking boot iso
+  set_fact:
+    xorrisofs_command: "xorriso -as mkisofs {{xorrisofs_raw.stdout}} -o {{ISO_kickstarted_path}} {{ISO_extract_path}}"
+  delegate_to: localhost
+
+- name: Full extraction of iso
+  shell: 7z x -o{{ISO_extract_path}} {{ ISO_source_path }}
+  changed_when: false
+  delegate_to: localhost
+
+- name: Get iso label (value of -V of xorrisofs)
+  set_fact:
+    iso_label: "{{ xorrisofs_raw.stdout | regex_search('-V ([^ ]+)', '\\1') | first }}"
+
+- name: Generate kickstart
+  template:
+    src: kickstart.j2
+    dest: "{{ISO_extract_path}}/isolinux/{{KS_file_name}}"
+  delegate_to: localhost
+
+- name: Generate kickstart
+  template:
+    src: kickstart.j2
+    dest: "{{ISO_extract_path}}/EFI/{{KS_file_name}}"
+  delegate_to: localhost
+
+- name: Generate kickstart
+  template:
+    src: kickstart.j2
+    dest: "{{ISO_extract_path}}/{{KS_file_name}}"
+  delegate_to: localhost
+
+
+- name: Generate grub config
+  template:
+    src: grub.cfg.j2
+    dest: "{{ISO_extract_path}}/EFI/BOOT/grub.cfg"
+  delegate_to: localhost
+
+- name: Generate isolinux config
+  template:
+    src: isolinux.cfg.j2
+    dest: "{{ISO_extract_path}}/isolinux/isolinux.cfg"
+  delegate_to: localhost
+
+- name: Repack boot iso
+  shell: "{{xorrisofs_command}}"
+  delegate_to: localhost
+
+- name: Clean up
+  file:
+    path: "{{ISO_extract_path}}"
+    state: absent
+  delegate_to: localhost

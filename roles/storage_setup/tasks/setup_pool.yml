@@ -1,0 +1,15 @@
+- name: Create main datastore (zpool) mirrored
+  command: "zpool create main_datastore mirror {{ main_disks[0] }} {{ main_disks[1] }} -f"
+  when: main_datastore_created == false
+
+- name: Set mountpoint for main_datastore
+  command: "zfs set mountpoint=/mnt/main_datastore main_datastore"
+  when: main_datastore_correctly_mounted == false
+    
+- name: Create secondary datastore (zpool) spanned
+  command: "zpool create secondary_datastore {{ secondary_disks | join(' ') }} -f"
+  when: secondary_datastore_created == false
+  
+- name: Set mountpoint for secondary_datastore
+  command: "zfs set mountpoint=/mnt/secondary_datastore secondary_datastore"
+  when: secondary_datastore_correctly_mounted == false

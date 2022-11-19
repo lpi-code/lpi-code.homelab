@@ -1,0 +1,42 @@
+- name: Create media folder
+  file:
+    path: /mnt/secondary_datastore/media
+    state: directory
+    mode: 0755
+
+- name: Set acl on media folder
+  acl:
+    path: /mnt/secondary_datastore/media
+    entity: "{{ item }}"
+    etype: user
+    permissions: rwX
+    state: present
+  with_items:
+    - "{{ user }}"
+    - "www-data"
+
+- name: Create subfolders
+  file:
+    path: /mnt/secondary_datastore/media/{{ item }}
+    state: directory
+    mode: 0755
+  with_items:
+    - Movies
+    - TV_show
+    - Music
+    - Pictures
+    - Documents
+
+- name: Set acl on subfolders
+  acl:
+    path: /mnt/secondary_datastore/media/{{ item }}
+    entity: "{{ item }}"
+    etype: user
+    permissions: rwX
+    state: present
+  with_items:
+    - Movies
+    - TV_show
+    - Music
+    - Pictures
+    - Documents

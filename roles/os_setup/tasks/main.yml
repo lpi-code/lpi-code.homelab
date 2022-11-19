@@ -1,0 +1,21 @@
+---
+- name: "Set facts"
+  include_tasks: setting_facts.yml
+
+- name: "RockyLinux OS check"
+  include_tasks: check.yml
+
+- name: "RockyLinux Download"
+  include_tasks: iso_download.yml
+
+- name: "RockyLinux OS setup"
+  include_tasks: iso_setup.yml
+
+- name: "Upload to pikvm"
+  include_tasks: upload_to_pikvm.yml
+
+- name: Remove kickstarted iso
+  file:
+    path: "{{ ISO_kickstarted_path }}"
+    state: absent
+  delegate_to: localhost

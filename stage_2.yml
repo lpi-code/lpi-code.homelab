@@ -1,0 +1,16 @@
+# Ansible playbook to setup a new OS
+# Path: playbooks/os_setup.yml
+---
+
+- name: play
+  hosts: all
+  gather_facts: no
+
+  tasks:
+    - name: Setup storage
+      include_role:
+        name: storage_setup
+    
+    - name: Security rules
+      include_role:
+        name: security_rules

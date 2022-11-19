@@ -1,0 +1,9 @@
+---
+# vars file for .
+new_user_name: "skorll"
+new_user_password: "Marseille2021"
+pikvm_address: "cloud.piernas.frw"
+pikvm_username: "admin"
+pikvm_password: "Lv31tbsp!"
+Almalinux_major_version: "9"
+swap_size: "32G"

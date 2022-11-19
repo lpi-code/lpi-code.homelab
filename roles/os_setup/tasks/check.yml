@@ -1,0 +1,29 @@
+- name: Set required values list
+  set_fact:
+    required_values_list:
+      - swap_size
+      - default_packages
+      - new_user_name
+      - new_user_password
+      - pikvm_address
+      - pikvm_address
+      - pikvm_username
+      - pikvm_username
+      - pikvm_password
+      - pikvm_password
+  delegate_to: localhost
+
+- name: Check that each variable check that each variable is set
+  assert:
+    that:
+      - lookup('vars', item) is defined
+      - lookup('vars', item) is not none
+    msg: "Variable {{item}} is not set"
+  loop: "{{required_values_list}}"
+
+
+- name: Checking that xorriso is installed
+  shell: "which xorriso"
+  register: xorriso_installed
+  changed_when: false
+  delegate_to: localhost

@@ -1,0 +1,30 @@
+---
+# defaults file for .
+random_str: "Set in playbook"
+temp_dir: /tmp
+
+# Constants
+ARCHITECTURE: x86_64
+MAJOR_RHEL_VERSION: 9
+ROCKY_LINUX_BASE_URL: https://download.rockylinux.org/pub/rocky
+ROCKY_LINUX_BOOT_ISO_URL: "{{ ROCKY_LINUX_BASE_URL }}/{{MAJOR_RHEL_VERSION}}/isos/{{ARCHITECTURE}}/Rocky-{{ARCHITECTURE}}-boot.iso"
+ROCKY_LINUX_BOOT_ISO_CHECKSUM_URL: "{{ ROCKY_LINUX_BOOT_ISO_URL }}.CHECKSUM"
+ROCKY_LINUX_BASE_OS_URL: "{{ ROCKY_LINUX_BASE_URL }}/{{MAJOR_RHEL_VERSION}}/BaseOS/{{ARCHITECTURE}}/os"
+
+# filename On local machine
+ISO_source_path: "{{temp_dir }}/orginal_boot_iso.iso"
+ISO_extract_path: "{{ temp_dir }}/kickstarted_iso"
+ISO_kickstarted_path: "{{ temp_dir }}/kickstarted_boot_iso_{{random_str}}.iso"
+KS_file_name: "ks.cfg"
+
+# Default for remote
+swap_size: 32 # In GB
+default_packages:
+  - tmux
+  - git
+  - curl
+  - zsh
+  - podman
+  - cockpit-podman
+
+cockpit_enabled: true

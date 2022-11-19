@@ -1,0 +1,26 @@
+- name: Retrieve local ssh public key
+  shell: "cat ~/.ssh/id_rsa.pub"
+  register: ssh_rsa_pub
+  changed_when: false
+  delegate_to: localhost
+
+- name: Set local ssh public key
+  set_fact:
+    ssh_rsa_pub: "{{ssh_rsa_pub.stdout}}"
+  delegate_to: localhost
+
+- name: "Retrieve local ip address (wlo or eth)"
+  shell: "ip -4 addr show wlo1 | grep -oP '(?<=inet\\s)\\d+(\\.\\d+){3}'"
+  register: local_ip
+  changed_when: false
+  delegate_to: localhost
+  failed_when: false
+
+- name: Retrieve local ip address (wlo or eth)
+  set_fact:
+    local_ip: "{{local_ip.stdout}}"
+
+- name: Setting a random_str
+  set_fact:
+    random_str: "{{ lookup('password', '/dev/null length=8 chars=ascii_letters,digits') }}"
+  delegate_to: localhost

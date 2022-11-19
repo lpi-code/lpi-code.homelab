@@ -1,0 +1,39 @@
+- name: Check if iso file exist
+  stat:
+    path: "{{ ISO_source_path }}"
+  register: iso_file
+  delegate_to: localhost
+
+- name: Download last version of Rocky Linux
+  get_url:
+    url:  "{{ ROCKY_LINUX_BOOT_ISO_URL }}"
+    dest: "{{ ISO_source_path }}"
+    mode: 0644
+  delegate_to: localhost
+  when: not iso_file.stat.exists
+
+- name: Download checksum of Rocky Linux
+  get_url:
+    url:  "{{ ROCKY_LINUX_BOOT_ISO_CHECKSUM_URL }}"
+    dest: "{{ ISO_source_path }}.CHECKSUM"
+    mode: 0644
+  delegate_to: localhost
+
+- name: "Get checksum in file"
+  shell: "cat {{ ISO_source_path }}.CHECKSUM | awk '{print $4}' | tail -n 1"
+  register: checksum
+  delegate_to: localhost
+
+- name: "Check checksum of iso"
+  shell: "sha256sum {{ ISO_source_path }} | awk '{print $1}'"
+  register: checksum_local
+  delegate_to: localhost
+
+- name: "Check if checksum is correct"
+  assert:
+    that:
+      - checksum.stdout == checksum_local.stdout
+    msg: 
+      - "Checksum of iso is not correct... aborting"
+      - "Consider deleting {{ ISO_source_path }} or forcing renewing iso"
+  delegate_to: localhost

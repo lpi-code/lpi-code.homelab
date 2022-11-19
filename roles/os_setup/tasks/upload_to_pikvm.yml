@@ -1,0 +1,66 @@
+---  
+- name: Disconnect the current drive
+  uri:
+    url: "https://{{ pikvm_address }}/api/msd/set_connected?connected=0"
+    method: POST
+    validate_certs: no
+    status_code: [ 400, 200 ]
+    headers:
+      X-KVMD-User: "{{ pikvm_username }}"
+      X-KVMD-Passwd: "{{ pikvm_password }}"
+  register: response
+  delegate_to: localhost
+  ignore_errors: yes
+  changed_when: response is not search("MsdDisconnectedError")
+
+- name: Remove the previous ISO
+  uri:
+    url: "https://{{ pikvm_address }}/api/msd/remove?image=autoinstall.iso"
+    status_code: [ 400, 200 ]
+    validate_certs: no
+    method: POST
+    follow_redirects: all
+    headers:
+      X-KVMD-User: "{{ pikvm_username }}"
+      X-KVMD-Passwd: "{{ pikvm_password }}"
+  register: response
+  changed_when: response is not search("MsdUnknownImageError")
+  delegate_to: localhost
+
+- name: Upload the ISO to PiKVM
+  shell:
+    cmd: "curl -k --location --request POST 'https://{{ pikvm_address }}/api/msd/write?image=autoinstall.iso' -u {{ pikvm_username }}:{{ pikvm_password }} --data-binary @{{ ISO_kickstarted_path }}"
+  delegate_to: localhost
+
+- name: Select the autoinstall ISO
+  uri:
+    validate_certs: no
+    follow_redirects: all
+    url: "https://{{ pikvm_address }}/api/msd/set_params?image=autoinstall.iso"
+    method: POST
+    headers:
+      X-KVMD-User: "{{ pikvm_username }}"
+      X-KVMD-Passwd: "{{ pikvm_password }}"
+  delegate_to: localhost
+
+- name: Connect the ISO to the server
+  uri:
+    validate_certs: no
+    follow_redirects: all
+    url: "https://{{ pikvm_address }}/api/msd/set_connected?connected=true"
+    method: POST
+    headers:
+      X-KVMD-User: "{{ pikvm_username }}"
+      X-KVMD-Passwd: "{{ pikvm_password }}"
+  delegate_to: localhost
+
+- name: "Start the server"
+  uri:
+    validate_certs: no
+    follow_redirects: all
+    url: "https://{{ pikvm_address }}/api/atx/click?button=power"
+    method: POST
+    headers:
+      X-KVMD-User: "{{ pikvm_username }}"
+      X-KVMD-Passwd: "{{ pikvm_password }}"
+  delegate_to: localhost

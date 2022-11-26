@@ -10,6 +10,3 @@
     - name: use os_setup role
       include_role:
         name: os_setup
-      vars:
-        os_setup:
-          mac_address: A8:A1:59:D7:7A:83

@@ -3,13 +3,10 @@
     required_values_list:
       - swap_size
       - default_packages
-      - new_user_name
-      - new_user_password
-      - pikvm_address
+      - ansible_user
+      - ansible_become_password
       - pikvm_address
       - pikvm_username
-      - pikvm_username
-      - pikvm_password
       - pikvm_password
   delegate_to: localhost
 

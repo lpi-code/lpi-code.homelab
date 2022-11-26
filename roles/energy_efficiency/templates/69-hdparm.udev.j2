@@ -1,0 +1,3 @@
+{% for disk_model in disk_models %}
+ACTION=="add", SUBSYSTEM=="block", KERNEL=="sd[a-z]", ENV{ID_MODEL}=="{{disk_model}}", RUN+="/usr/bin/hdparm -B 1 -S 241 -M /dev/$env{DEVNAME}"
+{% endfor %}

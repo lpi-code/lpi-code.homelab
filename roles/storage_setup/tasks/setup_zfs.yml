@@ -7,39 +7,21 @@
     name: '*'
     state: latest
 
-- name: Install zfs
+- name: Install kernel-devel
+  dnf:
+    name: kernel-devel
+    state: latest
+
+- name: Install zfs-release
   shell: "dnf install https://zfsonlinux.org/epel/zfs-release-2-2$(rpm --eval \"%{dist}\").noarch.rpm -y"
 
 - name: Import gpg key
   shell: "gpg --import --import-options show-only /etc/pki/rpm-gpg/RPM-GPG-KEY-openzfs"
 
-- name: Install dkms
-  dnf:
-    name: 
-      - dkms 
-- name: Enable zfs dkms
-  shell: "dnf config-manager --disable zfs; dnf config-manager --enable zfs-kmod"
-
 - name: Install zfs
   dnf:
     name: zfs
-
-- name: Edit /etc/security/limits.conf (append to file)
-  blockinfile:
-    path: /etc/security/limits.conf
-    block: |
-      # Modifications made for LXD
-      *               soft    nofile           1048576
-      *               hard    nofile           1048576
-      root            soft    nofile           1048576
-      root            hard    nofile           1048576
-      *               soft    memlock          unlimited
-      *               hard    memlock          unlimited
-  
-- name: Add 90-lxd-overrides.conf from file
-  copy:
-    src: 90-lxd-overrides.conf
-    dest: /etc/sysctl.d/90-lxd-overrides.conf
+    state: latest
 
 - name: Reboot
   reboot:
@@ -49,15 +31,6 @@
   wait_for_connection:
     delay: 10
     timeout: 600
-
-- name: Check overriden sysctl values
-  shell: "sysctl net.core.bpf_jit_limit"
-  register: sysctl_output
-
-- name: Check overriden sysctl values
-  assert:
-    that:
-      - sysctl_output.stdout == "net.core.bpf_jit_limit = 3000000000"
 
 - name: modprobe zfs
   shell: "modprobe zfs"

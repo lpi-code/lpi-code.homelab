@@ -1,0 +1,40 @@
+---
+# tasks file for energy_efficiency
+- name: Install powertop and hdparm
+  dnf:
+    name:
+      - powertop
+      - hdparm
+    state: latest
+
+- name: Set disk model list
+  set_fact:
+    disk_models: "{{ disk_model_mirror_main }},{{ disk_model_secondary | join(',') }}"
+
+- name: Convert disk model list to list
+  set_fact:
+    disk_models: "{{ disk_models.split(',') }}"
+
+- name: Templating udev rules for disks
+  template:
+    src: 69-hdparm.udev.j2
+    dest: /etc/udev/rules.d/69-hdparm.rules
+    owner: root
+    group: root
+    mode: 0644
+  notify: Reload udev
+
+- name: Templating powertop autotune service
+  template:
+    src: powertop-autotune.service.j2
+    dest: /etc/systemd/system/powertop-autotune.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: Reload systemd
+
+- name: Enable powertop autotune service
+  systemd:
+    name: powertop-autotune
+    enabled: yes
+    state: started

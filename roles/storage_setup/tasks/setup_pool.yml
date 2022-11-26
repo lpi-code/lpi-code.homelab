@@ -7,7 +7,7 @@
   when: main_datastore_correctly_mounted == false
     
 - name: Create secondary datastore (zpool) spanned
-  command: "zpool create secondary_datastore {{ secondary_disks | join(' ') }} -f"
+  command: "zpool create secondary_datastore mirror {{ secondary_disks | join(' ') }} -f"
   when: secondary_datastore_created == false
   
 - name: Set mountpoint for secondary_datastore

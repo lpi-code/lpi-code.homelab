@@ -11,6 +11,12 @@
     xorrisofs_command: "xorriso -as mkisofs {{xorrisofs_raw.stdout}} -o {{ISO_kickstarted_path}} {{ISO_extract_path}}"
   delegate_to: localhost
 
+- name: Remove existing extracted iso
+  file:
+    path: "{{ ISO_extract_path }}"
+    state: absent
+  delegate_to: localhost
+
 - name: Full extraction of iso
   shell: 7z x -o{{ISO_extract_path}} {{ ISO_source_path }}
   changed_when: false

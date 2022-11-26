@@ -14,3 +14,7 @@
     - name: Security rules
       include_role:
         name: security_rules
+    
+    - name: Setup energy efficiency
+      include_role:
+        name: energy_efficiency

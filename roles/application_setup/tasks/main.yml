@@ -1,2 +1,7 @@
 ---
 # tasks file for application_setup
+- name: Install podman and podman-compose
+  include_tasks: podman_install.yml
+
+- name: Install authentik
+  include_tasks: authentik.yml

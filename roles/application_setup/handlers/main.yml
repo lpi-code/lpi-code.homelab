@@ -1,2 +1,5 @@
 ---
 # handlers file for application_setup
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes

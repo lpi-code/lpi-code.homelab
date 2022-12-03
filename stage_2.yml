@@ -18,3 +18,7 @@
     - name: Setup energy efficiency
       include_role:
         name: energy_efficiency
+    
+    - name: Setup application
+      include_role:
+        name: application_setup

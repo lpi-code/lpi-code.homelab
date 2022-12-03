@@ -26,14 +26,14 @@
     rule: allow
     port: 9090
     proto: tcp
-    from_ip: 192.168.0.254/24
+    to_ip: 192.168.0.254/24
 
 - name: Allow cockpit on lan Ipv6
   ufw:
     rule: allow
     port: 9090
     proto: tcp
-    from_ip: fe80::/64
+    to_ip: fe80::/64
 
 - name: Enable dlna for local network IPv4
   ufw:

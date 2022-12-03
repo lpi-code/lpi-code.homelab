@@ -1,0 +1,75 @@
+
+- name: Create /opt/authentik
+  file:
+    path: /opt/authentik
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Checking if authentik password is set
+  fail:
+    msg: "authentik_password is not set"
+  when: authentik_password is not defined
+
+- name: Check if authentik_database volume exists
+  shell: "podman volume ls | grep authentik_database | wc -l"
+  register: authentik_database_volume
+  changed_when: false
+
+- name: Set authentik_db_exists fact
+  set_fact:
+    authentik_db_exists: "{{ authentik_database_volume.stdout | int > 0 }}"
+
+- name: Generating authentik password
+  set_fact:
+    authentik_secret_key: "{{ lookup('password', '/dev/null length=50 chars=ascii_letters,digits') }}"
+    authentik_db_password: "{{ lookup('password', '/dev/null length=40 chars=ascii_letters,digits') }}"
+  when: authentik_db_exists == false
+
+- name: Templating authtik .env
+  template:
+    src: authentik.env.j2
+    dest: /opt/authentik/.env
+    owner: root
+    group: root
+    mode: 0600
+  when: authentik_db_exists == false
+
+- name: Create authentik network
+  community.general.docker_network:
+    name: authentik
+    driver: bridge
+
+- name: Templating authentik compose file
+  template:
+    src: authentik-compose.yml.j2
+    dest: /opt/authentik/docker-compose.yml
+    owner: root
+    group: root
+    mode: 0644
+
+
+- name: Template authentik service
+  template:
+    src: authentik.service.j2
+    dest: /etc/systemd/system/authentik.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: Reload systemd
+
+- name: Enable authentik service and start it
+  systemd:
+    name: authentik
+    enabled: yes
+    state: restarted
+
+- name: Remove AUTHENTIK_BOOTSTRAP_PASSWORD from .env line
+  lineinfile:
+    path: /opt/authentik/.env
+    regexp: '^AUTHENTIK_BOOTSTRAP_PASSWORD='
+    line: 'AUTHENTIK_BOOTSTRAP_PASSWORD='
+    state: absent
+    state: started
+  when: authentik_db_exists == false

@@ -1,0 +1,16 @@
+[Unit]
+Description=Authentik SSO Service
+Requires=podman.service
+After=podman.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/docker-compose -f /opt/authentik/docker-compose.yml up -d
+ExecStop=/usr/local/bin/docker-compose -f /opt/authentik/docker-compose.yml down
+WorkingDirectory=/opt/authentik
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target

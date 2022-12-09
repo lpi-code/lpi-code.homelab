@@ -1,5 +1,8 @@
 ---
 # handlers file for application_setup
 - name: Reload systemd
-  systemd:
-    daemon_reload: yes
+  shell: "systemctl daemon-reload"
+  changed_when: false
+
+- name: Reload udev
+  shell: udevadm control --reload-rules ; udevadm trigger

@@ -1,0 +1,69 @@
+- name: Set the user to create
+  set_fact:
+    user_to_setup: home-assistant
+
+- name: Setup authentik user
+  include_tasks: setup_user.yml
+
+- name: Set registered
+  set_fact:
+    hass_user: "{{ created_user }}"
+
+- name: Create /opt/home-assistant
+  file:
+    path: /opt/home-assistant
+    state: directory
+    owner: home-assistant
+    group: home-assistant
+    mode: 0755
+
+- name: Create /opt/home-assistant/esphome
+  file:
+    path: /opt/home-assistant/esphome
+    state: directory
+    owner: home-assistant
+    group: home-assistant
+    mode: 0755
+
+- name: Template hass-compose.yml
+  template:
+    src: hass-compose.yml.j2
+    dest: /opt/home-assistant/docker-compose.yml
+    owner: home-assistant
+    group: home-assistant
+    mode: 0600
+
+- name: Template home assistant service file
+  template:
+    src: home-assistant.service.j2
+    dest: /etc/systemd/system/home-assistant.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: Reload systemd
+
+- name: Template ConbeeII udev rule
+  template:
+    src: 99-conbee2.rules.j2
+    dest: /etc/udev/rules.d/99-conbee2.rules
+    owner: root
+    group: root
+    mode: 0644
+  notify: Reload udev
+
+- name: Template RfxCom udev rule
+  template:
+    src: 99-rfxcom.rules.j2
+    dest: /etc/udev/rules.d/99-rfxcom.rules
+    owner: root
+    group: root
+    mode: 0644
+  notify: Reload udev
+
+
+- name: Enable home-assistant service and start it
+  systemd:
+    name: home-assistant
+    enabled: yes
+    state: restarted
+    daemon_reload: yes

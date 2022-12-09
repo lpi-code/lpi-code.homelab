@@ -1,0 +1,16 @@
+[Unit]
+Description=Home assistant service
+Requires=podman.service
+After=podman.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/docker-compose -f /opt/home-assistant/docker-compose.yml up -d
+ExecStop=/usr/local/bin/docker-compose -f /opt/home-assistant/docker-compose.yml stop
+WorkingDirectory=/opt/home-assistant
+User=home-assistant
+Group=home-assistant
+Environment=DOCKER_HOST=unix:///run/user/{{hass_user.uid}}/podman/podman.sock
+[Install]
+WantedBy=multi-user.target

@@ -19,8 +19,6 @@ services:
       - POSTGRES_DB=${PG_DB:-authentik}
     env_file:
       - .env
-    networks:
-      - default
   redis:
     image: docker.io/library/redis:alpine
     command: --save 60 1 --loglevel warning
@@ -33,8 +31,6 @@ services:
       timeout: 3s
     volumes:
       - redis:/data:z
-    networks:
-      - default
   server:
     image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2022.11.1}
     restart: unless-stopped
@@ -55,8 +51,6 @@ services:
     ports:
       - "9000:9000"
       - "9443:9443"
-    networks:
-      - default
   worker:
     image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2022.11.1}
     restart: unless-stopped
@@ -71,18 +65,13 @@ services:
     # This is optional, and can be removed. If you remove this, the following will happen
     # - The permissions for the /media folders aren't fixed, so make sure they are 1000:1000
     # - The docker socket can't be accessed anymore
-    user: root
-    privileged: true
     volumes:
       - ./media:/media:z
       - ./certs:/certs:z
-      - /var/run/docker.sock:/var/run/docker.sock
       - ./custom-templates:/templates:z
       - geoip:/geoip:z
     env_file:
       - .env
-    networks:
-      - default
   geoipupdate:
     image: "maxmindinc/geoipupdate:latest"
     volumes:
@@ -92,16 +81,6 @@ services:
       GEOIPUPDATE_FREQUENCY: "8"
     env_file:
       - .env
-    networks:
-      - default
-
-networks:
-  - default
-
-networks:
-  default:
-    external:
-      name: authentik
 
 volumes:
   database:

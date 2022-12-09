@@ -5,3 +5,6 @@
 
 - name: Install authentik
   include_tasks: authentik.yml
+
+- name: Install home-assistant
+  include_tasks: home_assistant.yml

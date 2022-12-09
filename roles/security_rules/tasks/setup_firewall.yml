@@ -81,6 +81,18 @@
     port: 548
     proto: tcp
 
+- name: Allow dns for private network
+  ufw:
+    rule: allow
+    port: 53
+    proto: udp
+    to_ip: "{{ item }}"
+  with_items:
+    - "192.168.0.0/24"
+    - "fe80::/64"
+    - "10.0.0.0/8" # for docker containers
+
+
 - name: Enable ufw
   ufw:
     state: enabled

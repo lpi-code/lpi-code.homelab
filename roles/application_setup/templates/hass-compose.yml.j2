@@ -1,0 +1,29 @@
+version: '3'
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: "ghcr.io/home-assistant/home-assistant:stable"
+    volumes:
+      - /opt/home-assistant:/config
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:8123:8123"
+    devices:
+{% for device in hass_devices %}
+      - "{{ device }}:{{ device }}"
+{% endfor %}
+    environment:
+      - TZ=Europe/Paris
+      - PUID={{ hass_user.uid }}
+      - PGID={{ hass_user.group }}
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+
+  esphome:
+    container_name: esphome
+    image: esphome/esphome
+    volumes:
+      - /opt/home-assistant/esphome:/config
+      - /etc/localtime:/etc/localtime:ro
+    restart: always

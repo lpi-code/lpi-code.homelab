@@ -7,10 +7,10 @@ After=podman.service
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/local/bin/docker-compose -f /opt/authentik/docker-compose.yml up -d
-ExecStop=/usr/local/bin/docker-compose -f /opt/authentik/docker-compose.yml down
+ExecStop=/usr/local/bin/docker-compose -f /opt/authentik/docker-compose.yml stop
 WorkingDirectory=/opt/authentik
-User=root
-Group=root
-
+User=authentik
+Group=authentik
+Environment=DOCKER_HOST=unix:///run/user/{{ authentik_user.uid }}/podman/podman.sock
 [Install]
 WantedBy=multi-user.target

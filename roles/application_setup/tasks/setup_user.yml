@@ -1,0 +1,38 @@
+- name: Create {{ user_to_setup }} user
+  user:
+    name: "{{ user_to_setup }}"
+    state: present
+    shell: /sbin/nologin
+    home: "/opt/{{ user_to_setup }}"
+    createhome: yes
+    system: no
+  register: created_user
+
+- name: Add user to subuid and subgid
+  lineinfile:
+    path: /etc/subuid
+    line: "{{ user_to_setup }}:100000:65536"
+    state: present
+    create: yes
+  notify: Reload systemd
+
+- name: Add user to subuid and subgid
+  lineinfile:
+    path: /etc/subgid
+    line: "{{ user_to_setup }}:100000:65536"
+    state: present
+    create: yes
+  notify: Reload systemd  
+
+- name: Add user to docker group
+  user:
+    name: "{{ user_to_setup }}"
+    groups: docker
+    append: yes
+
+- name: Enable linger with loginctl
+  shell: "loginctl enable-linger {{ user_to_setup }}"
+
+- name: Enable podman socket for user
+  shell: "sudo -u {{ user_to_setup }} XDG_RUNTIME_DIR=/run/user/{{ created_user.uid }} systemctl --user enable --now podman.socket"
+  

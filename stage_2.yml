@@ -22,3 +22,7 @@
     - name: Setup application
       include_role:
         name: application_setup
+    
+    - name: Setup webserver
+      include_role:
+        name: webserver_setup

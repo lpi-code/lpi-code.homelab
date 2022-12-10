@@ -1,10 +1,20 @@
+- name: Set the user to create
+  set_fact:
+    user_to_setup: authentik
+
+- name: Setup authentik user
+  include_tasks: setup_user.yml
+
+- name: Set registered
+  set_fact:
+    authentik_user: "{{ created_user }}"
 
 - name: Create /opt/authentik
   file:
     path: /opt/authentik
     state: directory
-    owner: root
-    group: root
+    owner: authentik
+    group: authentik
     mode: 0755
 
 - name: Checking if authentik password is set
@@ -21,6 +31,24 @@
   set_fact:
     authentik_db_exists: "{{ authentik_database_volume.stdout | int > 0 }}"
 
+- name: Get db password from env file
+  shell: "grep PG_PASS /opt/authentik/.env | cut -d '=' -f 2"
+  register: authentik_db_password
+  changed_when: false
+  when: authentik_db_exists
+
+- name: Get authentik secret key from env
+  shell: "grep PG_PASS /opt/authentik/.env | cut -d '=' -f 2"
+  register: authentik_secret_key
+  changed_when: false
+  when: authentik_db_exists
+
+- name: Set authentik_db_password and authentik_secret_key facts
+  set_fact:
+    authentik_db_password: "{{ authentik_db_password.stdout }}"
+    authentik_secret_key: "{{ authentik_secret_key.stdout }}"
+  when: authentik_db_exists
+
 - name: Generating authentik password
   set_fact:
     authentik_secret_key: "{{ lookup('password', '/dev/null length=50 chars=ascii_letters,digits') }}"
@@ -31,22 +59,16 @@
   template:
     src: authentik.env.j2
     dest: /opt/authentik/.env
-    owner: root
-    group: root
+    owner: authentik
+    group: authentik
     mode: 0600
-  when: authentik_db_exists == false
-
-- name: Create authentik network
-  community.general.docker_network:
-    name: authentik
-    driver: bridge
 
 - name: Templating authentik compose file
   template:
     src: authentik-compose.yml.j2
     dest: /opt/authentik/docker-compose.yml
-    owner: root
-    group: root
+    owner: authentik
+    group: authentik
     mode: 0644
 
 
@@ -59,11 +81,14 @@
     mode: 0644
   notify: Reload systemd
 
+- meta: flush_handlers
+
 - name: Enable authentik service and start it
   systemd:
     name: authentik
     enabled: yes
     state: restarted
+    daemon_reload: yes
 
 - name: Remove AUTHENTIK_BOOTSTRAP_PASSWORD from .env line
   lineinfile:
@@ -71,5 +96,4 @@
     regexp: '^AUTHENTIK_BOOTSTRAP_PASSWORD='
     line: 'AUTHENTIK_BOOTSTRAP_PASSWORD='
     state: absent
-    state: started
   when: authentik_db_exists == false

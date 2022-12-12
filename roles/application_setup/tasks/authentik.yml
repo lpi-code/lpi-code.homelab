@@ -22,14 +22,14 @@
     msg: "authentik_password is not set"
   when: authentik_password is not defined
 
-- name: Check if authentik_database volume exists
-  shell: "podman volume ls | grep authentik_database | wc -l"
-  register: authentik_database_volume
-  changed_when: false
+- name: Check if authentik .env exist
+  stat:
+    path: /opt/authentik/.env
+  register: authentik_env
 
 - name: Set authentik_db_exists fact
   set_fact:
-    authentik_db_exists: "{{ authentik_database_volume.stdout | int > 0 }}"
+    authentik_db_exists: "{{ authentik_env.stat.exists }}"
 
 - name: Get db password from env file
   shell: "grep PG_PASS /opt/authentik/.env | cut -d '=' -f 2"

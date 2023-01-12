@@ -1,0 +1,8 @@
+- name: Check if nextcloud data dataset exists
+  shell: "zfs list -H -o name main_datastore/nextcloud_data"
+  register: nextcloud_data_dataset
+  ignore_errors: yes
+
+- name: Create nextcloud data zfs dataset
+  shell: "zfs create main_datastore/nextcloud_data -o mountpoint=/mnt/main_datastore/nextcloud_data -o quota={{ nextcloud_data_quota }}"
+  when: nextcloud_data_dataset.rc != 0

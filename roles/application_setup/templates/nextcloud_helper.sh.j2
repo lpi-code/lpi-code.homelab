@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+
+# Usage: nextcloud_jobs.sh [-f Docker_Compose_file] [--refresh-face-recognition] [--file-scans] [--cron] [--fix-permissions]
+#        -f Docker_Compose_file: path to the Docker Compose file (default: docker-compose.yml)
+#        --refresh-face-recognition: refresh face recognition
+#        --file-scans: perform file scans
+#        --cron: call cron.php
+#        --fix-permissions: fix permissions inside the container
+
+# Set default values for options
+export DOCKER_HOST=unix:///run/user/{{ nextcloud_user.uid }}/podman/podman.sock
+export PATH=$PATH:/usr/local/bin
+
+
+compose_file=docker-compose.yml
+refresh_face_recognition=false
+perform_file_scans=false
+call_cron=false
+fix_permissions=false
+
+# Parse command line options
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -f|--docker-compose-file)
+      compose_file=$2
+      shift
+      ;;
+    --refresh-face-recognition)
+      refresh_face_recognition=true
+      ;;
+    --file-scans)
+      perform_file_scans=true
+      ;;
+    --cron)
+      call_cron=true
+      ;;
+    --fix-permissions)
+      fix_permissions=true
+      ;;
+    -h|--help)
+      echo "Usage: nextcloud_jobs.sh [-f Docker_Compose_file] [--refresh-face-recognition] [--file-scans] [--cron] [--fix-permissions]"
+      echo "       -f Docker_Compose_file: path to the Docker Compose file (default: docker-compose.yml)"
+      echo "       --refresh-face-recognition: refresh face recognition"
+      echo "       --file-scans: perform file scans"
+      echo "       --cron: call cron.php"
+      echo "       --fix-permissions: fix permissions inside the container"
+      exit 0
+      ;;
+    *)
+      echo "Invalid option: $1" >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+cd /opt/nextcloud
+# Perform Nextcloud jobs
+if $perform_file_scans; then
+  # For example:
+  docker-compose -f $compose_file exec nextcloud php occ files:scan --all
+  docker-compose -f $compose_file exec nextcloud php occ files:scan-app-data
+fi
+
+if $refresh_face_recognition; then
+  docker-compose -f $compose_file exec nextcloud php occ face:background_job -t 900
+fi
+
+if $call_cron; then
+  docker-compose -f $compose_file exec nextcloud php cron.php
+fi
+
+if $fix_permissions; then
+  podman unshare chown -R nextcloud:nextcloud data
+  podman unshare chown -R nextcloud:nextcloud webroot
+  podman unshare chown -R nextcloud:nextcloud .redis-session.ini
+  podman unshare chown -R nextcloud:nextcloud /mnt/main_datastore/nextcloud_data
+fi

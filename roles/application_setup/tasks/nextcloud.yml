@@ -1,0 +1,155 @@
+- name: Set the user to create
+  set_fact:
+    user_to_setup: nextcloud
+
+- name: Setup authentik user
+  include_tasks: setup_user.yml
+
+- name: Set registered
+  set_fact:
+    nextcloud_user: "{{ created_user }}"
+
+- name: Create /opt/nextcloud
+  file:
+    path: /opt/nextcloud
+    state: directory
+    owner: nextcloud
+    group: nextcloud
+    mode: 0755
+
+- name: Chown /mnt/main_datastore/nextcloud_data
+  file:
+    path: /mnt/main_datastore/nextcloud_data
+    owner: nextcloud
+    group: nextcloud
+    mode: 0755
+
+- name: link /opt/nextcloud/data to /mnt/main_datastore/nextcloud_data
+  file:
+    src: /mnt/main_datastore/nextcloud_data
+    dest: /opt/nextcloud/data
+    state: link
+    owner: nextcloud
+    group: nextcloud
+    mode: 0755
+
+- name: Create /opt/nextcloud/webroot
+  file:
+    path: /opt/nextcloud/webroot
+    state: directory
+    owner: nextcloud
+    group: nextcloud
+    mode: 0755
+
+- name: Create empty .redis-session.ini
+  file:
+    path: /opt/nextcloud/webroot/.redis-session.ini
+    state: touch
+    owner: nextcloud
+    group: nextcloud
+    mode: 0755
+
+- name: Check if nextcloud env file exists
+  stat:
+    path: /opt/nextcloud/.env
+  register: nextcloud_env_files
+
+- name: Set nextcloud_env_files_exists fact
+  set_fact:
+    nextcloud_env_files_exists: "{{ nextcloud_env_files.stat.exists }}"
+
+- name: Get root db password from env file
+  shell: "grep MYSQL_ROOT_PASSWORD /opt/nextcloud/.env | cut -d '=' -f 2"
+  register: nextcloud_root_db_password
+  changed_when: false
+  when: nextcloud_env_files_exists
+
+- name: Get nextcloud db password from env file
+  shell: "grep MYSQL_PASSWORD /opt/nextcloud/.env | cut -d '=' -f 2"
+  register: nextcloud_db_password
+  changed_when: false
+  when: nextcloud_env_files_exists
+
+- name: Set nextcloud_root_db_password and nextcloud_db_password facts
+  set_fact:
+    mariadb_root_password: "{{ nextcloud_root_db_password.stdout }}"
+    mariadb_nextcloud_password: "{{ nextcloud_db_password.stdout }}"
+  when: nextcloud_env_files_exists
+
+- name: Generating nextcloud root db password
+  set_fact:
+    mariadb_root_password: "{{ lookup('password', '/dev/null length=40 chars=ascii_letters,digits') }}"
+    mariadb_nextcloud_password: "{{ lookup('password', '/dev/null length=40 chars=ascii_letters,digits') }}"
+  when: nextcloud_env_files_exists == false
+
+- name: Template nextcloud.env
+  template:
+    src: nextcloud.env.j2
+    dest: /opt/nextcloud/.env
+    owner: nextcloud
+    group: nextcloud
+    mode: 0600
+
+- name: Template nextcloud-compose.yml
+  template:
+    src: nextcloud-compose.yml.j2
+    dest: /opt/nextcloud/docker-compose.yml
+    owner: nextcloud
+    group: nextcloud
+    mode: 0600
+
+- name: Template nextcloud service file
+  template:
+    src: nextcloud.service.j2
+    dest: /etc/systemd/system/nextcloud.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: Reload systemd
+
+- name: Touch redis session file
+  file:
+    path: /opt/nextcloud/.redis-session.ini
+    state: touch
+    owner: nextcloud
+    group: nextcloud
+    mode: 0755
+
+- name: Enable nextcloud service and start it
+  systemd:
+    name: nextcloud
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
+
+- name: Template nextcloud helper
+  template:
+    src: nextcloud_helper.sh.j2
+    dest: /opt/nextcloud/nextcloud_helper.sh
+    owner: nextcloud
+    group: nextcloud
+    mode: 0755
+
+- name: Fix permissions in nextcloud container
+  shell: "sudo -u nextcloud /opt/nextcloud/nextcloud_helper.sh -f /opt/nextcloud/docker-compose.yml --fix-permissions"
+# run as nextcloud user
+- name: Enable face recognition
+  shell: "sudo -u nextcloud DOCKER_HOST=unix:///run/user/{{ nextcloud_user.uid }}/podman/podman.sock /usr/local/bin/docker-compose -f /opt/nextcloud/docker-compose.yml exec -T nextcloud php /var/www/html/occ face:setup --model 1"
+
+
+- name: Create cron job for nextcloud
+  cron:
+    name: "nextcloud-cron"
+    user: nextcloud
+    job: "/opt/nextcloud/nextcloud_helper.sh -f /opt/nextcloud/docker-compose.yml --cron"
+    minute: "*/5"
+    state: present
+
+- name: Enable file index and face recognition at night with cron and helper
+  cron:
+    name: "nextcloud-index-and-face-recognition"
+    user: nextcloud
+    job: "/opt/nextcloud/nextcloud_helper.sh -f /opt/nextcloud/docker-compose.yml --refresh-face-recognition --file-scans"
+    minute: "0"
+    hour: "2"
+    state: present

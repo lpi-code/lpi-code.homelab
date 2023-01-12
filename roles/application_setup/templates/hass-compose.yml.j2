@@ -4,7 +4,7 @@ services:
     container_name: homeassistant
     image: "ghcr.io/home-assistant/home-assistant:stable"
     volumes:
-      - /opt/home-assistant:/config
+      - /opt/home-assistant:/config:rw
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
     ports:
@@ -24,6 +24,7 @@ services:
     container_name: esphome
     image: esphome/esphome
     volumes:
-      - /opt/home-assistant/esphome:/config
+      - /opt/home-assistant/esphome:/config:z
       - /etc/localtime:/etc/localtime:ro
     restart: always
+    

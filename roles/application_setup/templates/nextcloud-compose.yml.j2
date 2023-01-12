@@ -1,0 +1,56 @@
+version: "3.4"
+
+services:
+  database:
+    image: mariadb
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - nextcloud-db:/var/lib/mysql
+  redis:
+    image: redis
+    env_file: .env
+    restart: unless-stopped
+    volumes:
+      - redis:/data
+  nextcloud:
+    # explicitly use docker hub image
+    image: docker.io/lpicode/nextcloud:apache
+    restart: unless-stopped
+    env_file: .env
+    # setting  net.ipv4.ip_unprivileged_port_start to 0 is required for port 80
+    # see https://docs.nextcloud.com/server/12/admin_manual/installation/docker.html#port-80
+    # for more information
+    cap_add:
+      - NET_BIND_SERVICE
+    depends_on:
+      - database
+      - redis
+    volumes:
+      - /opt/nextcloud/webroot:/var/www/html:Z
+      # Uncomment and specify your data directory (if you have a mounted hard drive)
+      # !! ALWAYS make a backup of your data before such manipulations !!
+      - /mnt/main_datastore/nextcloud_data:/var/www/html/data:Z
+      - /opt/nextcloud/.redis-session.ini:/usr/local/etc/php/conf.d/redis-session.ini:Z
+    ports:
+      - "0.0.0.0:8080:80"
+    # Map www-data container user to your user on the host
+    # (see https://docs.nextcloud.com/server/12/admin_manual/installation/docker.html#user-group-ids
+    # for more information)
+    # Make internal www-data user use nextcloud user id on the host
+    user: "{{ nextcloud_user.uid }}:{{ nextcloud_user.uid }}"
+    # Uid map
+    # Make internal www-data user use nextcloud user id on the hosts
+  crablendar:
+    image: docker.io/lpicode/crablendar:latest
+    env_file: .env
+    ports:
+      - "0.0.0.0:8081:8080"
+
+
+volumes:
+  nextcloud-db:
+    driver: local
+  redis:
+    driver: local

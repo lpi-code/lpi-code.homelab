@@ -8,7 +8,7 @@
     system: no
   register: created_user
 
-- name: Add user to subuid and subgid
+- name: Add user to subuid and subuid
   lineinfile:
     path: /etc/subuid
     line: "{{ user_to_setup }}:100000:65536"
@@ -35,4 +35,11 @@
 
 - name: Enable podman socket for user
   shell: "sudo -u {{ user_to_setup }} XDG_RUNTIME_DIR=/run/user/{{ created_user.uid }} systemctl --user enable --now podman.socket"
-  
+
+- name: Template bashrc
+  template:
+    src: bashrc.j2
+    dest: "/opt/{{ user_to_setup }}/.bashrc"
+    owner: "{{ user_to_setup }}"
+    group: "{{ user_to_setup }}"
+    mode: 0644

@@ -1,0 +1,11 @@
+- name: Allow proxy
+  seboolean:
+    name: httpd_can_network_connect
+    state: yes
+    persistent: yes
+
+- name: Allow container to use device
+  seboolean:
+    name: container_use_devices
+    state: yes
+    persistent: yes

@@ -1,0 +1,19 @@
+---
+# tasks file for ./roles/zfs_setup/tasks/main.yml
+- name: "Set facts"
+  include_tasks: setting_facts.yml
+
+- name: "Install zfs"
+  include_tasks: setup_zfs.yml
+  when: zfs_installed == false
+
+- name: "Setup pool"
+  include_tasks: setup_pool.yml
+
+- name: "Setup datasets"
+  include_tasks: setup_datasets.yml
+
+- name: "Setup custom mountpoints"
+  include_tasks: setup_mountpoints.yml
+  when: custom_mountpoints is defined
+  loop: "{{ custom_mountpoints }}"

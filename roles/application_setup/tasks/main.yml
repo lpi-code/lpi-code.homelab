@@ -1,0 +1,13 @@
+---
+# tasks file for application_setup
+- name: Install podman and podman-compose
+  include_tasks: podman_install.yml
+
+- name: Install authentik
+  include_tasks: authentik.yml
+
+- name: Install home-assistant
+  include_tasks: home_assistant.yml
+
+- name: Install nextcloud
+  include_tasks: nextcloud.yml

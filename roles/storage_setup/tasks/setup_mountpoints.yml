@@ -1,0 +1,23 @@
+# Description: Mount custom mountpoints and add to fstab
+- name: Create mountpoint directory
+  file:
+    path: "{{ item.mountpoint }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: 0755
+- name: Mount custom mountpoints and add to fstab
+  mount:
+    path: "{{ item.mountpoint }}"
+    src: "{{ item.device }}"
+    fstype: "{{ item.fstype }}"
+    opts: "{{ item.options | default(omit) }}"
+    state: mounted
+    dump: 0
+    passno: 0
+# custom_mountpoints is defined in roles/storage_setup/defaults/main.yml
+# Example:
+# custom_mountpoints:
+#   - mountpoint: /mnt/secondary_datastore/game_repo
+#     device: /dev/disk/by-partuuid/5c0a1b1a-01
+#     fstype: zfs

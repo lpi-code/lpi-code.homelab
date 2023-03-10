@@ -1,0 +1,10 @@
+---
+# tasks file for security_rules
+- name: Setup firewall
+  include_tasks: setup_firewall.yml
+
+- name: Setup ssh
+  include_tasks: ssh.yml
+
+- name: Setup selinux
+  include_tasks: selinux.yml

@@ -6,3 +6,12 @@
 - name: Create nextcloud data zfs dataset
   shell: "zfs create main_datastore/nextcloud_data -o mountpoint=/mnt/main_datastore/nextcloud_data -o quota={{ nextcloud_data_quota }}"
   when: nextcloud_data_dataset.rc != 0
+
+- name: Check if Game repo dataset exists
+  shell: "zfs list -H -o name secondary_datastore/game_repo"
+  register: game_repo_dataset
+  ignore_errors: yes
+
+- name: Create Game repo on secondary datastore
+  shell: "zfs create secondary_datastore/game_repo -o mountpoint=/mnt/secondary_datastore/game_repo -o quota={{ game_repo_quota }}"
+  when: game_repo_dataset.rc != 0

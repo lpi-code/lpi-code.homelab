@@ -1,4 +1,4 @@
-***REMOVED***  
+---  
 - name: Disconnect the current drive
   uri:
     url: "https://{{ pikvm_address }}/api/msd/set_connected?connected=0"

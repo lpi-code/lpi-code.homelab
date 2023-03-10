@@ -1,0 +1,13 @@
+---
+# tasks file for network_setup
+- name: Create filestructure 
+  include_tasks: create_filestructure.yml
+
+- name: Install packages
+  dnf:
+    - miniDLNA
+    - samba
+    - netatalk
+
+- name: Configure services
+  include_tasks: configure_services.yml

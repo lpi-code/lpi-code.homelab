@@ -1,0 +1,18 @@
+---
+# handlers file for web_server_setup
+- name: Reload nginx
+  systemd:
+    name: nginx
+    state: reloaded
+  listen: "Reload nginx"
+
+- name: Restart ddclient
+  systemd:
+    name: ddclient
+    state: restarted
+  listen: "Restart ddclient"
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+  listen: "Reload systemd"

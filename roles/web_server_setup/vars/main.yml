@@ -1,0 +1,7 @@
+---
+# vars file for web_server_setup
+sites:
+  - sso
+  - home
+  - cloud
+  - crablendar

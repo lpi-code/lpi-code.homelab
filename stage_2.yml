@@ -1,6 +1,6 @@
 # Ansible playbook to setup a new OS
 # Path: playbooks/os_setup.yml
-***REMOVED***
+---
 
 - name: play
   hosts: all

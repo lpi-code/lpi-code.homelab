@@ -1,0 +1,8 @@
+---
+# handlers file for security_rules
+- name: restart ssh
+  service:
+    name: ssh
+    state: restarted
+  when: ansible_os_family == "Debian"
+  notify: restart ssh

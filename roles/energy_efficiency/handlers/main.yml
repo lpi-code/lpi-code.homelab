@@ -1,0 +1,11 @@
+---
+# handlers file for energy_efficiency
+#Restart udev
+- name: Reload udev
+  shell: udevadm control --reload-rules ; udevadm trigger
+  listen: "Reload udev"
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+  listen: "Reload systemd"

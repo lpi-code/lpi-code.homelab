@@ -1,0 +1,6 @@
+---
+# defaults file for security_rules
+
+app_ports:
+  - 8123 # Home Assistant
+  - 9443 # Authentik

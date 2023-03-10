@@ -1,0 +1,97 @@
+---
+# tasks file for web_server_setup
+- name: Install nginx and certbot
+  dnf:
+    name:
+      - nginx
+      - certbot
+      - python3-certbot-nginx
+    state: latest
+
+- name: Create a dns updater user
+  user:
+    name: dns-updater
+    state: present
+    createhome: yes
+    shell: /sbin/nologin
+    system: yes
+    home: /var/lib/dns-updater
+
+- name: Template cloudflare dns updater script
+  template:
+    src: dns_updater.sh.j2
+    dest: /var/lib/dns-updater/update_cloudflare_dns
+    owner: dns-updater
+    group: dns-updater
+    mode: 0700
+
+- name: Create cronjob
+  cron:
+    name: "Cloudflare DNS updater"
+    user: dns-updater
+    job: "/var/lib/dns-updater/update_cloudflare_dns"
+    minute: "*/30"
+    state: present
+
+- name: Run once to create config
+  shell: "/var/lib/dns-updater/update_cloudflare_dns"
+
+- name: Remove symlinks in sites-enabled
+  file:
+    path: /etc/nginx/sites-enabled/{{item}}.conf
+    state: absent
+  with_items: "{{ sites }}"
+
+- name: Generate ssl certificate
+  shell: "certbot certonly --nginx -d {{item}}.{{web_domain}} -m {{letsencrypt_email}} --agree-tos --non-interactive"
+  with_items: "{{ sites }}"
+
+- name: Add to cron to renew certificate every month
+  cron:
+    name: "Letsencrypt renewal of {{item}}.{{web_domain}}"
+    user: root
+    job: "certbot certonly --nginx -d {{item}}.{{web_domain}} -m {{letsencrypt_email}} --agree-tos --non-interactive"
+    minute: "0"
+    hour: "0"
+    day: "1"
+    month: "*"
+    state: present
+  with_items: "{{ sites }}"
+    
+- name: Add sites-available and sites-enabled
+  file:
+    path: /etc/nginx/{{item}}
+    state: directory
+  with_items:
+    - sites-available
+    - sites-enabled
+
+- name: Add sites-enabled to nginx.conf in http block
+  lineinfile:
+    path: /etc/nginx/nginx.conf
+    regexp: '^    include /etc/nginx/sites-enabled/\*;'
+    line: '    include /etc/nginx/sites-enabled/*.conf;'
+    state: present
+    insertafter: 'http {'
+  notify: Reload nginx
+
+- name: Start and enable nginx
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Template server sites conf
+  template:
+    src: "{{item}}.conf.j2"
+    dest: /etc/nginx/sites-available/{{item}}.conf
+  notify: Reload nginx
+  with_items: "{{ sites }}"
+
+- name: Enable sites 
+  file:
+    src: /etc/nginx/sites-available/{{item}}.conf
+    dest: /etc/nginx/sites-enabled/{{item}}.conf
+    state: link
+  with_items: "{{ sites }}"
+

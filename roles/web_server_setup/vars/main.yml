@@ -3,5 +3,6 @@
 sites:
   - sso
   - home
+  - home-legacy
   - cloud
   - crablendar

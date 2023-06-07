@@ -4,7 +4,7 @@ map $http_upgrade $connection_upgrade_keepalive {
     ''      '';
 }
 upstream crablendar {
-    server localhost:8090;
+    server localhost:8081;
     # Improve performance by keeping some connections alive.
     keepalive 10;
 }

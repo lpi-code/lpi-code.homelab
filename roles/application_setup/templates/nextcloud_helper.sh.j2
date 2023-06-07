@@ -72,7 +72,7 @@ fi
 
 if $fix_permissions; then
   podman unshare chown -R nextcloud:nextcloud data
-  podman unshare chown -R nextcloud:nextcloud webroot
+  podman unshare chown -R nextcloud:nextcloud config.php
   podman unshare chown -R nextcloud:nextcloud .redis-session.ini
   podman unshare chown -R nextcloud:nextcloud /mnt/main_datastore/nextcloud_data
 fi

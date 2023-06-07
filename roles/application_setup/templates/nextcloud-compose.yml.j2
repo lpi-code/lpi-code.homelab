@@ -16,7 +16,7 @@ services:
       - redis:/data
   nextcloud:
     # explicitly use docker hub image
-    image: docker.io/lpicode/nextcloud:apache
+    image: nextcloud:apache
     restart: unless-stopped
     env_file: .env
     # setting  net.ipv4.ip_unprivileged_port_start to 0 is required for port 80
@@ -28,10 +28,10 @@ services:
       - database
       - redis
     volumes:
-      - /opt/nextcloud/webroot:/var/www/html:Z
       # Uncomment and specify your data directory (if you have a mounted hard drive)
       # !! ALWAYS make a backup of your data before such manipulations !!
       - /mnt/main_datastore/nextcloud_data:/var/www/html/data:Z
+      - /opt/nextcloud/config.php/var/www/html/config/config.php:Z
       - /opt/nextcloud/.redis-session.ini:/usr/local/etc/php/conf.d/redis-session.ini:Z
     ports:
       - "0.0.0.0:8080:80"

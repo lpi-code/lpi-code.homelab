@@ -33,17 +33,17 @@
     group: nextcloud
     mode: 0755
 
-- name: Create /opt/nextcloud/webroot
-  file:
-    path: /opt/nextcloud/webroot
-    state: directory
-    owner: nextcloud
-    group: nextcloud
-    mode: 0755
+# - name: Create /opt/nextcloud/webroot
+#   file:
+#     path: /opt/nextcloud/webroot
+#     state: directory
+#     owner: nextcloud
+#     group: nextcloud
+#     mode: 0755
 
 - name: Create empty .redis-session.ini
   file:
-    path: /opt/nextcloud/webroot/.redis-session.ini
+    path: /opt/nextcloud/.redis-session.ini
     state: touch
     owner: nextcloud
     group: nextcloud
@@ -133,8 +133,8 @@
 - name: Fix permissions in nextcloud container
   shell: "sudo -u nextcloud /opt/nextcloud/nextcloud_helper.sh -f /opt/nextcloud/docker-compose.yml --fix-permissions"
 # run as nextcloud user
-- name: Enable face recognition
-  shell: "sudo -u nextcloud DOCKER_HOST=unix:///run/user/{{ nextcloud_user.uid }}/podman/podman.sock /usr/local/bin/docker-compose -f /opt/nextcloud/docker-compose.yml exec -T nextcloud php /var/www/html/occ face:setup --model 1"
+# - name: Enable face recognition
+#   shell: "sudo -u nextcloud DOCKER_HOST=unix:///run/user/{{ nextcloud_user.uid }}/podman/podman.sock /usr/local/bin/docker-compose -f /opt/nextcloud/docker-compose.yml exec -T nextcloud php /var/www/html/occ face:setup --model 1"
 
 
 - name: Create cron job for nextcloud
@@ -145,11 +145,11 @@
     minute: "*/5"
     state: present
 
-- name: Enable file index and face recognition at night with cron and helper
+- name: Enable file index at night with cron and helper
   cron:
     name: "nextcloud-index-and-face-recognition"
     user: nextcloud
-    job: "/opt/nextcloud/nextcloud_helper.sh -f /opt/nextcloud/docker-compose.yml --refresh-face-recognition --file-scans"
+    job: "/opt/nextcloud/nextcloud_helper.sh -f /opt/nextcloud/docker-compose.yml --file-scans"
     minute: "0"
     hour: "2"
     state: present

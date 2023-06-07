@@ -1,0 +1,16 @@
+# Ansible playbook to setup a new OS
+# Path: playbooks/os_setup.yml
+---
+
+- name: play
+  hosts: all
+  gather_facts: no
+
+  tasks:
+    - name: Setup application
+      include_role:
+        name: application_setup
+    
+    - name: Setup webserver
+      include_role:
+        name: web_server_setup

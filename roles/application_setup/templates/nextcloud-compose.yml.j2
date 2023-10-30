@@ -31,7 +31,7 @@ services:
       # Uncomment and specify your data directory (if you have a mounted hard drive)
       # !! ALWAYS make a backup of your data before such manipulations !!
       - /mnt/main_datastore/nextcloud_data:/var/www/html/data:Z
-      - /opt/nextcloud/config.php/var/www/html/config/config.php:Z
+      - /opt/nextcloud/config:/var/www/html/config:Z
       - /opt/nextcloud/.redis-session.ini:/usr/local/etc/php/conf.d/redis-session.ini:Z
     ports:
       - "0.0.0.0:8080:80"

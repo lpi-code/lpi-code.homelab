@@ -106,11 +106,12 @@
     insertbefore: '^\*filter'
 
 - name: Add commit to before.rules before filter
-  lineinfile:
+  blockinfile:
     path: /etc/ufw/before.rules
-    state: present
-    insertbefore: '^\*filter'
-    line: "COMMIT"
+    block: |
+      COMMIT
+    marker: "# {mark} ANSIBLE MANAGED BLOCK {mark}"
+    insertafter: '^\*nat'
     
 
 

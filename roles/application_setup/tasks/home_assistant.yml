@@ -5,6 +5,15 @@
 - name: Setup authentik user
   include_tasks: setup_user.yml
 
+- name: Setting service information
+  set_fact:
+    service:
+      description: The heart of home automation
+      userhome: /opt/home-assistant
+      username: home-assistant
+      usergroup: home-assistant
+      uid: "{{ created_user.uid }}"
+
 - name: Set registered
   set_fact:
     hass_user: "{{ created_user }}"
@@ -35,7 +44,7 @@
 
 - name: Template home assistant service file
   template:
-    src: home-assistant.service.j2
+    src: generic_compose.service.j2
     dest: /etc/systemd/system/home-assistant.service
     owner: root
     group: root

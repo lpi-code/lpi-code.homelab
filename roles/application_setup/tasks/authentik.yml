@@ -5,6 +5,15 @@
 - name: Setup authentik user
   include_tasks: setup_user.yml
 
+- name: Setting service information
+  set_fact:
+    service:
+      description: The authentik SSO used by all other services
+      userhome: /opt/authentik
+      username: authentik
+      usergroup: authentik
+      uid: "{{ created_user.uid }}"
+
 - name: Set registered
   set_fact:
     authentik_user: "{{ created_user }}"
@@ -55,7 +64,7 @@
     authentik_db_password: "{{ lookup('password', '/dev/null length=40 chars=ascii_letters,digits') }}"
   when: authentik_db_exists == false
 
-- name: Templating authtik .env
+- name: Templating authentik .env
   template:
     src: authentik.env.j2
     dest: /opt/authentik/.env
@@ -71,10 +80,9 @@
     group: authentik
     mode: 0644
 
-
 - name: Template authentik service
   template:
-    src: authentik.service.j2
+    src: generic_compose.service.j2
     dest: /etc/systemd/system/authentik.service
     owner: root
     group: root

@@ -9,6 +9,15 @@
   set_fact:
     nextcloud_user: "{{ created_user }}"
 
+- name: Setting service information
+  set_fact:
+    service:
+      description: The personnal cloud
+      userhome: /opt/nextcloud
+      username: nextcloud
+      usergroup: nextcloud
+      uid: "{{ created_user.uid }}"
+
 - name: Create /opt/nextcloud
   file:
     path: /opt/nextcloud
@@ -100,7 +109,7 @@
 
 - name: Template nextcloud service file
   template:
-    src: nextcloud.service.j2
+    src: generic_compose.service.j2
     dest: /etc/systemd/system/nextcloud.service
     owner: root
     group: root

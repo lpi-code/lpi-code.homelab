@@ -98,6 +98,44 @@
     - "fe80::/64"
     - "10.0.0.0/8" # for docker containers
 
+- name: add nat rule secion to before.rules
+  lineinfile:
+    path: /etc/ufw/before.rules
+    line: "*nat"
+    state: present
+    insertbefore: '^\*filter'
+
+- name: Add commit to before.rules before filter
+  lineinfile:
+    path: /etc/ufw/before.rules
+    state: present
+    insertbefore: '^\*filter'
+    line: "COMMIT"
+    
+
+
+- name: Copy port forwarder script
+  copy:
+    src: port_forward.sh
+    dest: /usr/local/bin/port_forward.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Allow minecraft servers from external
+  include_tasks: minecraft_firewall.yml
+  loop: "{{ minecraft_ports }}"
+
+- name: Allow mcsdaemon access from external
+  ufw:
+    rule: allow
+    port: "{{ mcsdaemon_port }}"
+    proto: tcp
+    to_port: "{{ mcsdaemon_port }}"
+
+
+    
+
 
 - name: Enable ufw
   ufw:

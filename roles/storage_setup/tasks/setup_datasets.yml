@@ -15,3 +15,23 @@
 - name: Create Game repo on secondary datastore
   shell: "zfs create secondary_datastore/game_repo -o mountpoint=/mnt/secondary_datastore/game_repo -o quota={{ game_repo_quota }}"
   when: game_repo_dataset.rc != 0
+
+- name: Check if vm_data dataset exists
+  shell: "zfs list -H -o name main_datastore/vm_data"
+  register: vm_data_dataset
+  ignore_errors: yes
+
+- name: Create vm_data zfs dataset
+  shell: "zfs create main_datastore/vm_data -o mountpoint=/mnt/main_datastore/vm_data -o quota={{ vm_data_quota }}"
+  when: vm_data_dataset.rc != 0
+
+- name: Check if vm_iso dataset exists
+  shell: "zfs list -H -o name secondary_datastore/vm_iso"
+  register: vm_iso_dataset
+  ignore_errors: yes
+
+- name: Create vm_iso zfs dataset
+  shell: "zfs create secondary_datastore/vm_iso -o mountpoint=/mnt/secondary_datastore/vm_iso -o quota={{ vm_iso_quota }}"
+  when: vm_iso_dataset.rc != 0
+
+

@@ -1,0 +1,23 @@
+---
+# tasks file for vm_server
+- name: Install dependency for kvm
+  dnf:
+    name:
+      - libvirt-daemon-kvm
+    state: latest
+
+- name: Enable kvm
+  systemd:
+    name: libvirtd
+    enabled: yes
+    state: started
+
+- name: Setup mountpoint for libvirt
+  file:
+    path: /var/lib/libvirt/images
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+

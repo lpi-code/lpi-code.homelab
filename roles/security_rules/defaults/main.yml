@@ -4,3 +4,8 @@
 app_ports:
   - 8123 # Home Assistant
   - 9443 # Authentik
+
+minecraft_ports:
+  - 25565
+  - 25566
+  - 25567

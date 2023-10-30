@@ -1,0 +1,17 @@
+- name: "Allow external to connect to minecraft ({{ item }})"
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    to_port: "{{ item }}"
+
+- name: add iptable in ufw pre before.rules 
+  lineinfile:
+    path: /etc/ufw/before.rules
+    line: "-A PREROUTING -p {{ protocol }} -m {{ protocol }} --dport {{item}} -j DNAT --to-destination {{minecraft_vm_ip}}:{{item}}"
+    state: present
+    insertafter: '^\*nat'
+  loop: ['tcp', 'udp']
+  loop_control:
+    loop_var: protocol
+  
+

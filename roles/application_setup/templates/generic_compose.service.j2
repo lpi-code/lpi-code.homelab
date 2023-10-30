@@ -1,0 +1,20 @@
+[Unit]
+Description={{ service.description }}
+Requires=podman.socket
+After=podman.socket
+StartLimitIntervalSec=10
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/docker-compose -f {{ service.userhome }}/docker-compose.yml up -d
+ExecStop=/usr/local/bin/docker-compose -f {{ service.userhome }}/docker-compose.yml stop
+WorkingDirectory={{ service.userhome }}
+User={{ service.username }}
+Group={{ service.usergroup }}
+Environment=DOCKER_HOST=unix:///run/user/{{service.uid}}/podman/podman.sock
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

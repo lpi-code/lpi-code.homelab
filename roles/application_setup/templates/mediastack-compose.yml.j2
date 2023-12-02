@@ -1,0 +1,102 @@
+---
+version: "2.1"
+services:
+
+    jellyfin:
+        image: lscr.io/linuxserver/jellyfin:latest
+        container_name: jellyfin
+        environment:
+        - PUID={{mediastack_user.uid}}
+        - PGID={{mediastack_user.gid}}
+        - TZ=Etc/UTC
+        volumes:
+        - ./jellyfin/config:/config:z
+        - ./jellyfin/data:/data:z
+        ports:
+        - 8096:8096
+        restart: unless-stopped
+
+    sonarr:
+        image: lscr.io/linuxserver/sonarr:3.0.10
+        container_name: sonarr
+        environment:
+        - PUID={{mediastack_user.uid}}
+        - PGID={{mediastack_user.gid}}
+        - TZ=Etc/UTC
+        volumes:
+        - ./sonarr/config:/config:z
+        - ./transmission/tmp:/tmp:z
+        ports:
+        - 8989:8989
+        restart: unless-stopped
+
+    jackett:
+        image: lscr.io/linuxserver/jackett:latest
+        container_name: jackett
+        environment:
+        - PUID={{mediastack_user.uid}}
+        - PGID={{mediastack_user.gid}}
+        - TZ=Etc/UTC
+        - AUTO_UPDATE=true #optional
+        - RUN_OPTS= #optional
+        volumes:
+        - ./jackett/config:/config:z
+        - ./jackett/downloads:/downloads:z
+        ports:
+        - 9117:9117
+        restart: unless-stopped
+
+    joal:
+        depends_on:
+        - vpn
+        image: anthonyraymond/joal:latest
+        container_name: joal
+        restart: unless-stopped
+        volumes:
+        - ./ratio-master:/data:z
+        network_mode: "container:vpn"
+        command: ["--joal-conf=/data", "--spring.main.web-environment=true", "--server.port=9999", "--joal.ui.path.prefix=test", "--joal.ui.secret-token=test"]
+    
+    flaresolverr:
+        # DockerHub mirror flaresolverr/flaresolverr:latest
+        image: ghcr.io/flaresolverr/flaresolverr:latest
+        container_name: flaresolverr
+        environment:
+        - LOG_LEVEL=${LOG_LEVEL:-info}
+        - LOG_HTML=${LOG_HTML:-false}
+        - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+        - TZ=Europe/Paris
+        ports:
+        - "${PORT:-8191}:8191"
+        restart: unless-stopped 
+
+    transmission:
+        image: haugene/transmission-openvpn:latest
+        container_name: transmission
+        cap_add:
+            - NET_ADMIN
+            - SYS_ADMIN
+        env:
+            - LOCAL_NETWORK=
+            - TRANSMISSION_DOWNLOAD_DIR=/downloads
+            - TRANSMISSION_INCOMPLETE_DIR=/incomplete-downloads
+
+        envfile:
+            - ./vpn/.env
+
+        volumes:
+            - ./transmission/data:/data:z
+            - ./transmission/downloads:/downloads:z
+            - ./transmission/tmp:/incomplete-downloads:z
+        ports:
+            - 9091:9091
+        restart: unless-stopped
+    vpn:
+        image: 
+        cap_add:
+            - NET_ADMIN               # Required
+            - NET_RAW                 # Required
+        envfile:
+            - ./vpn/.env
+        sysctls:
+            - net.ipv6.conf.all.disable_ipv6=1  # Recomended if using ipv4 only

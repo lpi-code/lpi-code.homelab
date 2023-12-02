@@ -28,3 +28,5 @@ default_packages:
   - cockpit-podman
 
 cockpit_enabled: true
+
+upload_method: pikvm

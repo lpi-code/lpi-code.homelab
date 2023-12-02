@@ -13,6 +13,11 @@
 
 - name: "Upload to pikvm"
   include_tasks: upload_to_pikvm.yml
+  when: upload_method == "pikvm"
+
+- name: "Add to vm server"
+  include_tasks: add_to_vm_server.yml
+  when: upload_method == "vm_server"
 
 - name: Remove kickstarted iso
   file:

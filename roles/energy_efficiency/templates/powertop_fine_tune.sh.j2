@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -e
+
+print() {
+  printf "\n$1\n"
+}
+
+print "Disabling autosuspend for rfxcom"
+selected_device_path=$(ls /dev/ttyUSB* | head -n 1)
+busnum=$(udevadm info --name=$selected_device_path --attribute-walk | grep "busnum" | head -n1 | cut -d '"' -f 2)
+devnum=$(udevadm info --name=$selected_device_path --attribute-walk | grep "devnum" | head -n2 | cut -d '"' -f 2 | tail -n 1)
+echo 'on' > "/sys/bus/usb/devices/$busnum-$devnum/power/control";
+

@@ -34,4 +34,6 @@
   shell: "zfs create secondary_datastore/vm_iso -o mountpoint=/mnt/secondary_datastore/vm_iso -o quota={{ vm_iso_quota }}"
   when: vm_iso_dataset.rc != 0
 
-
+- name: Create apple backup zfs dataset
+  shell: "zfs create secondary_datastore/apple_backup -o mountpoint=/mnt/main_datastore/apple_backup -o quota={{ apple_backup_quota }}"
+  when: apple_backup_dataset.rc != 0

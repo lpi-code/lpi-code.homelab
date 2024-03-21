@@ -26,6 +26,14 @@
     group: nextcloud
     mode: 0755
 
+- name: Create /opt/nextcloud
+  file:
+    path: /opt/nextcloud/mnt
+    state: directory
+    owner: nextcloud
+    group: nextcloud
+    mode: 0755
+
 - name: Chown /mnt/main_datastore/nextcloud_data
   file:
     path: /mnt/main_datastore/nextcloud_data

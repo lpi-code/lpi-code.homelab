@@ -26,5 +26,6 @@ default_packages:
   - zsh
   - podman
   - cockpit-podman
+  - cockpit-machines
 
 cockpit_enabled: true

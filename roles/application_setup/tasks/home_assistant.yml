@@ -118,19 +118,32 @@
     owner: home-assistant
     group: home-assistant
 
-- name: Add fifo input file
-  file:
+- name: Test if fifo input file is created
+  stat:
     path: /opt/home-assistant/fifo/input
-    state: touch
-    owner: home-assistant
-    group: home-assistant
+  register: fifo_input
+
+- name: Add fifo input file
+  shell: rm -f /opt/home-assistant/fifo/input && mkfifo /opt/home-assistant/fifo/input
+  when: fifo_input.stat.exists == False or fifo_input.stat.isfifo == False
+
+- name: Test if fifo output file is created
+  stat:
+    path: /opt/home-assistant/fifo/output
+  register: fifo_output
 
 - name: Add fifo output file
+  shell: rm -f /opt/home-assistant/fifo/output && mkfifo /opt/home-assistant/fifo/output
+  when: fifo_output.stat.exists == False or fifo_output.stat.isfifo == False
+
+- name: Set correct ownership of fifo files
   file:
-    path: /opt/home-assistant/fifo/output
-    state: touch
+    path: "{{ item }}"
     owner: home-assistant
     group: home-assistant
+  with_items:
+    - /opt/home-assistant/fifo/input
+    - /opt/home-assistant/fifo/output
 
 - name: Add Script folder
   file: 

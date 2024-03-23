@@ -2,7 +2,7 @@
   set_fact:
     user_to_setup: home-assistant
 
-- name: Setup authentik user
+- name: Setup home assistant user
   include_tasks: setup_user.yml
 
 - name: Setting service information
@@ -76,6 +76,98 @@
 - name: Enable home-assistant service and start it
   systemd:
     name: home-assistant
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
+
+- name: Add home-assistant permission to shutdown
+  lineinfile:
+    path: /etc/sudoers
+    line: "home-assistant ALL=(ALL) NOPASSWD: /sbin/shutdown"
+    state: present
+    create: yes
+
+- name: Add home-assistant certs folder
+  file:
+    path: /opt/home-assistant/certs
+    state: directory
+    owner: home-assistant
+    group: home-assistant
+
+- name: Add home-assistant .ssh folder
+  file:
+    path: /opt/home-assistant/.ssh
+    state: directory
+
+- name: Genrate ssh keys inside certs folder
+  community.crypto.openssh_keypair:
+    path: /opt/home-assistant/certs/id_rsa
+    type: rsa
+    size: 4096
+    state: present
+    owner: home-assistant
+    group: home-assistant
+    mode: 0600
+  register: ssh
+
+
+- name: Add a fifo folder 
+  file:
+    path: /opt/home-assistant/fifo
+    state: directory
+    owner: home-assistant
+    group: home-assistant
+
+- name: Add fifo input file
+  file:
+    path: /opt/home-assistant/fifo/input
+    state: touch
+    owner: home-assistant
+    group: home-assistant
+
+- name: Add fifo output file
+  file:
+    path: /opt/home-assistant/fifo/output
+    state: touch
+    owner: home-assistant
+    group: home-assistant
+
+- name: Add Script folder
+  file: 
+    path: /opt/home-assistant/Scripts
+    state: directory
+    owner: home-assistant
+    group: home-assistant
+
+- name: Template shutdown watcher script into Script
+  template:
+    src: shutdown_watcher.sh.j2
+    dest: /opt/home-assistant/Scripts/shutdown_watcher.sh
+    owner: home-assistant
+    group: home-assistant
+    mode: 0700
+
+- name: Template shutdown_watcher service file
+  template:
+    src: shutdown_watcher.service.j2
+    dest: /etc/systemd/system/shutdown_watcher.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: Reload systemd
+
+- name: Write PASSWORD to environment file
+  lineinfile:
+    path: /opt/home-assistant/Scripts/.env
+    line: "PASSCODE={{ shutdown_watcher_password }}"
+    state: present
+    create: yes
+
+
+
+- name: Enable shutdown_watcher service and start it
+  systemd:
+    name: shutdown_watcher
     enabled: yes
     state: restarted
     daemon_reload: yes

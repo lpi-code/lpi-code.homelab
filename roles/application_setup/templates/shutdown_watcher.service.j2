@@ -1,0 +1,14 @@
+[Unit]
+Description=A service that wait for home assistant container to order shutdown
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+ExecStart=/opt/home-assistant/Scripts/shutdown_watcher.sh /opt/home-assistant/fifo/input /opt/home-assistant/fifo/output
+User=home-assistant
+Group=home-assistant
+EnvironmentFile=/opt/home-assistant/Scripts/.env
+
+[Install]
+WantedBy=multi-user.target

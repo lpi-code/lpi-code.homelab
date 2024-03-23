@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# This script wait for a PASSCODE to be entered in fifo $1 and then shutdown the computer while outputting the shutdown message $2
+DELAY=30
+
+
+# Check if the fifo exists
+while true; do
+    # Read the passcode from the fifo
+    passcode=$(cat $1)
+
+    # Check if the passcode is correct
+    if [ "$passcode" == $PASSCODE ]; then
+        echo "Shutting down in $DELAY seconds" | tee $2
+        sleep $DELAY
+        sudo shutdown -h $DELAY
+    fi
+done
+
+# Shutdown the computer

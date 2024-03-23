@@ -4,8 +4,10 @@ services:
     container_name: homeassistant
     image: "ghcr.io/home-assistant/home-assistant:stable"
     volumes:
-      - /opt/home-assistant:/config:rw
+      - /opt/home-assistant/config:/config:rw
       - /etc/localtime:/etc/localtime:ro
+      - /opt/home-assistant/certs:/certs:ro
+      - /opt/home-assistant/fifo:/fifo:rw
     restart: unless-stopped
     ports:
       - "0.0.0.0:8123:8123"

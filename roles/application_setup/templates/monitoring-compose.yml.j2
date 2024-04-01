@@ -6,3 +6,26 @@ services:
     ports:
       - 3001:3001
     restart: unless-stopped
+  freshrss:
+    image: freshrss/freshrss:latest
+    container_name: freshrss
+    hostname: freshrss
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: 10m
+    volumes:
+      - ./freshrss/data:/var/www/FreshRSS/data:z
+      - ./freshrss/extensions:/var/www/FreshRSS/extensions:z
+    environment:
+      TZ: Europe/Paris
+      CRON_MIN: '3,33'
+      TRUSTED_PROXY: 172.16.0.1/12 192.168.0.0/16
+      OIDC_ENABLED: 1
+      OIDC_PROVIDER_METADATA_URL: "{{freshrss_oidc_provider_metadata_url}}"
+      OIDC_CLIENT_ID: "{{freshrss_oidc_client_id}}"
+      OIDC_CLIENT_SECRET: "{{freshrss_oidc_client_secret}}"
+      OIDC_X_FORWARDED_HEADERS: X-Forwarded-Port X-Forwarded-Proto X-Forwarded-Host
+      OIDC_SCOPES: openid email profile
+    ports:
+      - 3002:80

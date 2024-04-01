@@ -14,13 +14,18 @@
       usergroup: monitoring
       uid: "{{ created_user.uid }}"
 
-- name: Create /opt/monitoring/uptime_kuma_data
+- name: Create freshrss directory
   file:
-    path: /opt/monitoring/uptime_kuma_data
+    path: "/opt/monitoring/{{ item }}"
     state: directory
     owner: monitoring
     group: monitoring
     mode: 0755
+  with_items:
+    - uptime_kuma_data
+    - freshrss
+    - freshrss/data
+    - freshrss/extensions
 
 - name: Template monitoring-compose.yml
   template:

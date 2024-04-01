@@ -1,0 +1,47 @@
+- name: Set the user to create
+  set_fact:
+    user_to_setup: monitoring
+
+- name: Setup home assistant user
+  include_tasks: setup_user.yml
+
+- name: Setting service information
+  set_fact:
+    service:
+      description: Monitoring service
+      userhome: /opt/monitoring
+      username: monitoring
+      usergroup: monitoring
+      uid: "{{ created_user.uid }}"
+
+- name: Create /opt/monitoring/uptime_kuma_data
+  file:
+    path: /opt/monitoring/uptime_kuma_data
+    state: directory
+    owner: monitoring
+    group: monitoring
+    mode: 0755
+
+- name: Template monitoring-compose.yml
+  template:
+    src: monitoring-compose.yml.j2
+    dest: /opt/monitoring/docker-compose.yml
+    owner: monitoring
+    group: monitoring
+    mode: 0600
+
+- name: Template monitoring service file
+  template:
+    src: generic_compose.service.j2
+    dest: /etc/systemd/system/monitoring.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: Reload systemd
+
+- name: Enable monitoring service and start it
+  systemd:
+    name: monitoring
+    enabled: yes
+    state: restarted
+    daemon_reload: yes

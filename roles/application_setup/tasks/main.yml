@@ -11,3 +11,6 @@
 
 - name: Install nextcloud
   include_tasks: nextcloud.yml
+
+- name: Install monitoring
+  include_tasks: monitoring.yml

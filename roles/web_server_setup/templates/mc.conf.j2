@@ -1,9 +1,4 @@
 # Upstream where your minecraft server is hosted.
-upstream mc_daemon {
-    server {{ minecraft_vm_ip}}:24444;
-    # Improve performance by keeping some connections alive.
-    keepalive 10;
-}
 
 # Upgrade WebSocket if requested, otherwise use keepalive
 map $http_upgrade $connection_upgrade_keepalive {

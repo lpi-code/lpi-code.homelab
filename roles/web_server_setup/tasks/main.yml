@@ -16,6 +16,8 @@
     shell: /sbin/nologin
     system: yes
     home: /var/lib/dns-updater
+  tags:
+    - dns
 
 - name: Template cloudflare dns updater script
   template:
@@ -24,6 +26,8 @@
     owner: dns-updater
     group: dns-updater
     mode: 0700
+  tags:
+    - dns
 
 - name: Create cronjob
   cron:
@@ -32,19 +36,31 @@
     job: "/var/lib/dns-updater/update_cloudflare_dns"
     minute: "*/30"
     state: present
+  tags:
+    - dns
 
 - name: Run once to create config
   shell: "/var/lib/dns-updater/update_cloudflare_dns"
+  tags:
+    - dns
 
-- name: Remove symlinks in sites-enabled
-  file:
-    path: /etc/nginx/sites-enabled/{{item}}.conf
-    state: absent
-  with_items: "{{ sites }}"
+- name: Template upstream config for nginx
+  template:
+    src: 01_upstream.conf.j2
+    dest: /etc/nginx/conf.d/01_upstream.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: Reload nginx
 
-- name: Generate ssl certificate
-  shell: "certbot certonly --nginx -d {{item}}.{{web_domain}} -m {{letsencrypt_email}} --agree-tos --non-interactive"
-  with_items: "{{ sites }}"
+- name: Make nginx load upstream config
+  lineinfile:
+    path: /etc/nginx/nginx.conf
+    regexp: '^    include /etc/nginx/conf.d/01_upstream.conf;'
+    line: '    include /etc/nginx/conf.d/01_upstream.conf;'
+    state: present
+    insertafter: 'http {'
+  notify: Reload nginx
 
 - name: Add to cron to renew certificate every month
   cron:
@@ -57,7 +73,9 @@
     month: "*"
     state: present
   with_items: "{{ sites }}"
-    
+  tags:
+    - certs
+
 - name: Add sites-available and sites-enabled
   file:
     path: /etc/nginx/{{item}}
@@ -87,6 +105,29 @@
     dest: /etc/nginx/sites-available/{{item}}.conf
   notify: Reload nginx
   with_items: "{{ sites }}"
+  when: item not in web_server_setup_ports_mapping and item not in web_server_setup_proxied_by_authentik
+
+- name: Template generic sites conf
+  template:
+    src: generic.conf.j2
+    dest: /etc/nginx/sites-available/{{item}}.conf
+  notify: Reload nginx
+  with_items: "{{ sites }}"
+  when: item in web_server_setup_ports_mapping and item not in web_server_setup_proxied_by_authentik
+
+- name: Template proxied sites conf
+  template:
+    src: proxied_by_authentik.conf.j2
+    dest: /etc/nginx/sites-available/{{item}}.conf
+  notify: Reload nginx
+  with_items: "{{ sites }}"
+  when: item in proxied_by_authentik
+
+- name: Generate ssl certificate
+  shell: "certbot certonly --nginx -d {{item}}.{{web_domain}} -m {{letsencrypt_email}} --agree-tos --non-interactive"
+  with_items: "{{ sites }}"
+  tags:
+    - certs
 
 - name: Enable sites 
   file:

@@ -34,4 +34,11 @@
   shell: "zfs create secondary_datastore/vm_iso -o mountpoint=/mnt/secondary_datastore/vm_iso -o quota={{ vm_iso_quota }}"
   when: vm_iso_dataset.rc != 0
 
+- name: Check if media dataset exists
+  shell: "zfs list -H -o name main_datastore/media"
+  register: media_dataset
+  ignore_errors: yes
 
+- name: Create media zfs dataset
+  shell: "zfs create main_datastore/media -o mountpoint=/mnt/main_datastore/media -o quota={{ media_quota }}"
+  when: media_dataset.rc != 0

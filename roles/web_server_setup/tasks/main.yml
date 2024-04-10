@@ -121,7 +121,7 @@
     dest: /etc/nginx/sites-available/{{item}}.conf
   notify: Reload nginx
   with_items: "{{ sites }}"
-  when: item in proxied_by_authentik
+  when: item in web_server_setup_proxied_by_authentik
 
 - name: Generate ssl certificate
   shell: "certbot certonly --nginx -d {{item}}.{{web_domain}} -m {{letsencrypt_email}} --agree-tos --non-interactive"

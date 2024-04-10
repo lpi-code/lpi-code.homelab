@@ -12,7 +12,7 @@ upstream mc_daemon {
 {%for site in web_server_setup_ports_mapping%}
 {%if site not in web_server_setup_proxied_by_authentik%}
 upstream {{site}} {
-    server localhost:{{ports_mapping[site]}};
+    server localhost:{{web_server_setup_ports_mapping[site]}};
     keepalive 10;
 }
 {%endif%}

@@ -26,6 +26,8 @@
     - freshrss
     - freshrss/data
     - freshrss/extensions
+    - homepage/config
+    - homepage/images
 
 - name: Template monitoring-compose.yml
   template:

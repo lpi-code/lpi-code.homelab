@@ -29,3 +29,11 @@ services:
       OIDC_SCOPES: openid email profile
     ports:
       - 3002:80
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    volumes:
+      - ./homepage/config:/app/config:Z
+      - ./homepage/images:/app/public/images:Z
+    ports:
+      - 3003:3000

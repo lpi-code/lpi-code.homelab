@@ -29,6 +29,20 @@
   tags:
     - dns
 
+# - name: Generate domain list (for sites create a list of site.web_domain)
+#   set_fact:
+#     full_sites: "{{ full_sites | default('') }}{{ ',' if full_sites is defined else '' }}{{ item }}.{{ web_domain }}"
+#   with_items: "{{ sites }}"
+    
+
+
+- name: Generate ssl certificate
+  shell: 
+    cmd: "{% for item in sites %}certbot certonly --nginx -d {{ item }}.{{ web_domain }} -m {{letsencrypt_email}} --agree-tos --non-interactive &&{% endfor %} true"
+  #"certbot certonly --nginx -d {{ full_sites }} -m {{letsencrypt_email}} --agree-tos --non-interactive"
+  tags:
+    - certs
+
 - name: Create cronjob
   cron:
     name: "Cloudflare DNS updater"
@@ -122,12 +136,6 @@
   notify: Reload nginx
   with_items: "{{ sites }}"
   when: item in web_server_setup_proxied_by_authentik
-
-- name: Generate ssl certificate
-  shell: "certbot certonly --nginx -d {{item}}.{{web_domain}} -m {{letsencrypt_email}} --agree-tos --non-interactive"
-  with_items: "{{ sites }}"
-  tags:
-    - certs
 
 - name: Enable sites 
   file:

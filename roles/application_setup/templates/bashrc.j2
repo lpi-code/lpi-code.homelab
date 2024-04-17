@@ -119,3 +119,6 @@ fi
 export XDG_RUNTIME_DIR=/run/user/{{ created_user.uid }}
 export DOCKER_HOST=unix:///run/user/{{ created_user.uid }}/podman/podman.sock
 export PATH=$PATH:/usr/local/bin
+
+# alias
+alias dc=docker-compose

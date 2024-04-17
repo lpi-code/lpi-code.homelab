@@ -19,6 +19,7 @@ web_server_setup_ports_mapping:
   sso: 9443
   rss: 3002
   home-legacy: 8123
+  joal: 7171
 
 web_server_setup_proxied_by_authentik:
   - bazarr
@@ -35,6 +36,9 @@ web_server_setup_proxied_by_authentik:
   - torrent
   - streamsearch
   - tdarr
+  - menu
+  - joal
+  - books
 
 web_server_setup_https_upstream:
   - authentik

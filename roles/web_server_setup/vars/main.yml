@@ -21,3 +21,6 @@ sites:
   - sabnzbd
   - sonarr
   - tdarr
+  - menu
+  - joal
+  - books

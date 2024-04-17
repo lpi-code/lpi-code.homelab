@@ -50,6 +50,9 @@ services:
       - "${WEBUI_PORT_SONARR:?err}:8989"        # WebUI Portal: Sonarr
       - "${WEBUI_PORT_WHISPARR:?err}:6969"      # WebUI Portal: Whisparr
       - "${WEBUI_PORT_QBITTORRENT:?err}:${WEBUI_PORT_QBITTORRENT:?err}"   # WebUI Portal: qBittorrent
+      - "${WEBUI_PORT_JOAL:?err}:${WEBUI_PORT_JOAL:?err}"
+      - "${WEBUI_PORT_CALIBRE:?err}:${WEBUI_PORT_CALIBRE:?err}"
+      - "${WEBUI_PORT_CALIBRE_WEB:?err}:8083"
 
       - "${QBIT_PORT_TCP:?err}:6881/tcp"        # Transmission Torrent Port TCP
       - "${QBIT_PORT_UDP:?err}:6881/udp"        # Transmission Torrent Port UDP
@@ -153,9 +156,9 @@ services:
     container_name: jellyfin
     restart: unless-stopped
 # Add Configurations for GPU Hardware Rendering Here:
-#    devices:
-#      - /dev/dri/renderD128:/dev/dri/renderD128
-#      - /dev/dri/card0:/dev/dri/card0
+    devices:
+     - /dev/dri/renderD128:/dev/dri/renderD128
+     - /dev/dri/card0:/dev/dri/card0
     volumes:
       - ${FOLDER_FOR_CONFIGS:?err}/jellyfin:/config:Z
       - ${FOLDER_FOR_MEDIA:?err}/media:/data/media:z
@@ -431,8 +434,8 @@ services:
     restart: unless-stopped
     volumes:
       - ${FOLDER_FOR_CONFIGS:?err}/tdarr/server:/app/server:Z
-      - ${FOLDER_FOR_CONFIGS:?err}/tdarr/configs:/app/configs:Z
-      - ${FOLDER_FOR_CONFIGS:?err}/tdarr/logs:/app/logs:Z
+      - ${FOLDER_FOR_CONFIGS:?err}/tdarr/configs:/app/configs:z
+      - ${FOLDER_FOR_CONFIGS:?err}/tdarr/logs:/app/logs:z
       - ${FOLDER_FOR_MEDIA:?err}/media/tdarr_transcode_cache:/temp:z
       - ${FOLDER_FOR_MEDIA:?err}:/data:z
     environment:
@@ -454,9 +457,12 @@ services:
     image: ghcr.io/haveagitgat/tdarr_node:latest
     container_name: tdarr-node
     restart: unless-stopped
+    devices:
+     - /dev/dri/renderD128:/dev/dri/renderD128
+     - /dev/dri/card0:/dev/dri/card0
     volumes:
-      - ${FOLDER_FOR_CONFIGS:?err}/tdarr/configs:/app/configs:Z
-      - ${FOLDER_FOR_CONFIGS:?err}/tdarr/logs:/app/logs:Z
+      - ${FOLDER_FOR_CONFIGS:?err}/tdarr/configs:/app/configs:z
+      - ${FOLDER_FOR_CONFIGS:?err}/tdarr/logs:/app/logs:z
       - ${FOLDER_FOR_MEDIA:?err}/media/tdarr_transcode_cache:/temp:z
       - ${FOLDER_FOR_MEDIA:?err}:/data:z
     environment:
@@ -569,3 +575,48 @@ services:
       - no-new-privileges:true
     network_mode: none
 
+  joal:
+    image: anthonyraymond/joal:latest
+    container_name: joal
+    restart: unless-stopped
+    volumes:
+      - ./config/joal:/data:z
+      - ./data/joal/torrents:/data/torrents:z
+    network_mode: "service:gluetun"
+    command:
+      - "--joal-conf=/data"
+      - "--spring.main.web-environment=true"
+      - "--server.port=$WEBUI_PORT_JOAL"
+      - "--joal.ui.path.prefix=$JOAL_PREFIX"
+      - "--joal.ui.secret-token=$JOAL_TOKEN"
+  
+  calibre:
+    image: ghcr.io/linuxserver/calibre
+    container_name: calibre
+    environment:
+      - PUID=$PUID #change this to your user's PID
+      - PGID=$PGID #change this to your user's PGID
+      - CUSTOM_PORT=${WEBUI_PORT_CALIBRE:?err}
+      - DOCKER_MODS=linuxserver/calibre-web:calibre
+    volumes:
+      - ${FOLDER_FOR_CONFIGS:?err}/calibre/config:/config:Z #change before the ':'
+      - ${FOLDER_FOR_MEDIA:?err}/calibre_uploads:/uploads:z #change before the ':'
+      - ${FOLDER_FOR_CONFIGS:?err}/calibre/plugins:/plugins:Z #change before the ':'
+      - ${FOLDER_FOR_MEDIA:?err}/media/ebooks:/Calibre_Library:z #this is where your ebooks will end up
+    restart: unless-stopped
+    network_mode: "service:gluetun"
+
+  calibre-web:
+    image: ghcr.io/linuxserver/calibre-web
+    container_name: calibre-web
+    environment:
+      - PUID=$PUID
+      - PGID=$PGID
+      - DOCKER_MODS=linuxserver/mods:universal-calibre
+    volumes:
+      - ${FOLDER_FOR_CONFIGS:?err}/calibre-web:/config:Z
+      - ${FOLDER_FOR_MEDIA:?err}/media/ebooks:/books:z
+    restart: unless-stopped
+    depends_on:
+      - calibre
+    network_mode: "service:gluetun"

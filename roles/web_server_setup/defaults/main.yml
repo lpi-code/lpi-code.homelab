@@ -34,7 +34,6 @@ web_server_setup_proxied_by_authentik:
   - monitoring
   - home
   - torrent
-  - streamsearch
   - tdarr
   - menu
   - joal

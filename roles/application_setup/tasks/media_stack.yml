@@ -52,7 +52,7 @@
   mount:
     path: "{{ homedir }}/data"
     src: /mnt/main_datastore/media
-    opts: x-systemd.requires=//mnt/main_datastore/media,bind
+    opts: x-systemd.after=zfs-mount.service,bind
     state: mounted
     fstype: none
 
@@ -128,7 +128,7 @@
     cmd: sudo -u media_stack bash -c 'podman unshare chown -R media_stack:media_stack /opt/media_stack/data'
     chdir: "{{ homedir }}"
 
-- name: Restart media_stack service сай
+- name: Restart media_stack service
   ansible.builtin.systemd:
     name: media_stack
     state: restarted

@@ -20,11 +20,14 @@
 
 - name: Create /opt/authentik
   file:
-    path: /opt/authentik
+    path: /opt/{{ item }}
     state: directory
     owner: authentik
     group: authentik
     mode: 0755
+  with_items:
+    - authentik
+    - authentik/data
 
 - name: Checking if authentik password is set
   fail:
@@ -64,9 +67,23 @@
     authentik_db_password: "{{ lookup('password', '/dev/null length=40 chars=ascii_letters,digits') }}"
   when: authentik_db_exists == false
 
+- name: Templating authentik.css
+  template:
+    src: authentik/authentik.css.j2
+    dest: /opt/authentik/data/custom.css
+    owner: authentik
+    group: authentik
+    mode: 0644
+
+- name: Getting server lan remote ip
+  set_fact:
+    application_setup_server_ip: "{{ ansible_default_ipv4.address }}"
+  delegate_to: localhost
+  connection: local
+
 - name: Templating authentik .env
   template:
-    src: authentik.env.j2
+    src: authentik/authentik.env.j2
     dest: /opt/authentik/.env
     owner: authentik
     group: authentik
@@ -74,7 +91,7 @@
 
 - name: Templating authentik compose file
   template:
-    src: authentik-compose.yml.j2
+    src: authentik/authentik-compose.yml.j2
     dest: /opt/authentik/docker-compose.yml
     owner: authentik
     group: authentik

@@ -74,6 +74,8 @@ services:
       - ./certs:/certs:z
       - ./custom-templates:/templates:z
       - ./data/geoip:/geoip:z
+      - ./media/logo.png:/web/dist/assets/icons/icon_left_brand.png:ro # this is to include a logo in mail
+  
     env_file:
       - .env
     extra_hosts:

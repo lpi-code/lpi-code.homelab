@@ -1,0 +1,19 @@
+upstream nextcloud {
+    server localhost:8080;
+}
+
+upstream mc_daemon {
+    server {{ minecraft_vm_ip}}:24444;
+    # Improve performance by keeping some connections alive.
+    keepalive 10;
+}
+
+
+{%for site in web_server_setup_ports_mapping%}
+{%if site not in web_server_setup_proxied_by_authentik%}
+upstream {{site}} {
+    server localhost:{{web_server_setup_ports_mapping[site]}};
+    keepalive 10;
+}
+{%endif%}
+{%endfor%}

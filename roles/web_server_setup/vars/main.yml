@@ -7,3 +7,20 @@ sites:
   - cloud
   - crablendar
   - mc
+  - monitoring
+  - rss
+  - stream
+  - streamsearch
+  - torrent
+  - bazarr
+  - lidarr
+  - mylar3
+  - prowlarr
+  - radarr
+  - readarr
+  - sabnzbd
+  - sonarr
+  - tdarr
+  - menu
+  - joal
+  - books

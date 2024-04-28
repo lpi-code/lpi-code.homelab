@@ -1,45 +1,44 @@
+---
 - name: Create {{ user_to_setup }} user
-  user:
+  ansible.builtin.user:
     name: "{{ user_to_setup }}"
     state: present
     shell: /sbin/nologin
-    home: "/opt/{{ user_to_setup }}"
-    createhome: yes
-    system: no
+    home: /opt/{{ user_to_setup }}
+    createhome: true
+    system: false
   register: created_user
 
 - name: Add user to subuid and subuid
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/subuid
     line: "{{ user_to_setup }}:100000:65536"
     state: present
-    create: yes
+    create: true
   notify: Reload systemd
 
 - name: Add user to subuid and subgid
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/subgid
     line: "{{ user_to_setup }}:100000:65536"
     state: present
-    create: yes
-  notify: Reload systemd  
+    create: true
+  notify: Reload systemd
 
 - name: Add user to docker group
-  user:
+  ansible.builtin.user:
     name: "{{ user_to_setup }}"
     groups: docker
-    append: yes
+    append: true
 
 - name: Enable linger with loginctl
-  shell: "loginctl enable-linger {{ user_to_setup }}"
-
+  ansible.builtin.command: loginctl enable-linger {{ user_to_setup }}
 - name: Enable podman socket for user
-  shell: "sudo -u {{ user_to_setup }} XDG_RUNTIME_DIR=/run/user/{{ created_user.uid }} systemctl --user enable --now podman.socket"
-
+  ansible.builtin.command: sudo -u {{ user_to_setup }} XDG_RUNTIME_DIR=/run/user/{{ created_user.uid }} systemctl --user enable --now podman.socket
 - name: Template bashrc
-  template:
+  ansible.builtin.template:
     src: bashrc.j2
-    dest: "/opt/{{ user_to_setup }}/.bashrc"
+    dest: /opt/{{ user_to_setup }}/.bashrc
     owner: "{{ user_to_setup }}"
     group: "{{ user_to_setup }}"
-    mode: 0644
+    mode: "0644"

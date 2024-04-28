@@ -12,7 +12,7 @@ services:
       retries: 5
       timeout: 5s
     volumes:
-      - database:/var/lib/postgresql/data:z
+      - ./data/database:/var/lib/postgresql/data:Z
     environment:
       - POSTGRES_PASSWORD=${PG_PASS:?database password required}
       - POSTGRES_USER=${PG_USER:-authentik}
@@ -30,7 +30,7 @@ services:
       retries: 5
       timeout: 3s
     volumes:
-      - redis:/data:z
+      - ./data/redis:/data:Z
   server:
     image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2022.11.1}
     restart: unless-stopped
@@ -43,14 +43,17 @@ services:
       AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
       # AUTHENTIK_ERROR_REPORTING__ENABLED: "true"
     volumes:
+      - ./data/custom.css:/web/dist/custom.css:roZ
       - ./media:/media:z
       - ./custom-templates:/templates:z
-      - geoip:/geoip:z
+      - ./data/geoip:/geoip:z
     env_file:
       - .env
     ports:
       - "0.0.0.0:${AUTHENTIK_PORT_HTTP:-9000}:9000"
       - "0.0.0.0:${AUTHENTIK_PORT_HTTPS:-9443}:9443"
+    extra_hosts:
+      - "server:${SERVER_IP:?external ip required}"
   worker:
     image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2022.11.1}
     restart: unless-stopped
@@ -65,27 +68,24 @@ services:
     # This is optional, and can be removed. If you remove this, the following will happen
     # - The permissions for the /media folders aren't fixed, so make sure they are 1000:1000
     # - The docker socket can't be accessed anymore
+    user: root
     volumes:
       - ./media:/media:z
       - ./certs:/certs:z
       - ./custom-templates:/templates:z
-      - geoip:/geoip:z
+      - ./data/geoip:/geoip:z
+      - ./media/logo.png:/web/dist/assets/icons/icon_left_brand.png:ro # this is to include a logo in mail
+  
     env_file:
       - .env
+    extra_hosts:
+      - "server:${SERVER_IP:?external ip required}"
   geoipupdate:
     image: "maxmindinc/geoipupdate:latest"
     volumes:
-      - geoip:/usr/share/GeoIP:z
+      - ./data/geoip:/usr/share/GeoIP:z
     environment:
       GEOIPUPDATE_EDITION_IDS: "GeoLite2-City"
       GEOIPUPDATE_FREQUENCY: "8"
     env_file:
       - .env
-
-volumes:
-  database:
-    driver: local
-  redis:
-    driver: local
-  geoip:
-    driver: local

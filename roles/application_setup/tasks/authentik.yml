@@ -20,11 +20,14 @@
 
 - name: Create /opt/authentik
   file:
-    path: /opt/authentik
+    path: /opt/{{ item }}
     state: directory
     owner: authentik
     group: authentik
     mode: 0755
+  with_items:
+    - authentik
+    - authentik/data
 
 - name: Checking if authentik password is set
   fail:
@@ -64,9 +67,32 @@
     authentik_db_password: "{{ lookup('password', '/dev/null length=40 chars=ascii_letters,digits') }}"
   when: authentik_db_exists == false
 
+- name: Templating authentik.css
+  template:
+    src: authentik/authentik.css.j2
+    dest: /opt/authentik/data/custom.css
+    owner: authentik
+    group: authentik
+    mode: 0644
+
+- name: Create a dummy logo if it doesn't exist
+  file:
+    path: /opt/authentik/media/logo.png
+    state: touch
+
+- name: Template all mail templates
+  template:
+    src: "authentik/{{ item | basename }}"
+    dest: "/opt/authentik/custom-templates/{{ item | basename | regex_replace('.j2', '')}}"
+    owner: authentik
+    group: authentik
+    mode: 0644
+  with_fileglob:
+    - ../templates/authentik/mail_template_*
+
 - name: Templating authentik .env
   template:
-    src: authentik.env.j2
+    src: authentik/authentik.env.j2
     dest: /opt/authentik/.env
     owner: authentik
     group: authentik
@@ -74,7 +100,7 @@
 
 - name: Templating authentik compose file
   template:
-    src: authentik-compose.yml.j2
+    src: authentik/authentik-compose.yml.j2
     dest: /opt/authentik/docker-compose.yml
     owner: authentik
     group: authentik

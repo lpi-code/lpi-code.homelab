@@ -1,0 +1,36 @@
+
+- Security/Monitoring:
+    - Uptime Kuma:
+        href:
+        icon: uptime-kuma
+        widget:
+          type: uptimekuma
+          url: {{ uptime_kuma_url }}
+          slug: {{ uptime_kuma_slug }}
+
+- Medias:
+    - Calendar:
+        widget:
+          type: calendar
+          firstDayInWeek: monday
+          view: weekly
+          maxEvents: 10
+          showTime: true
+          timezone: Europe/Paris
+          integrations:
+{% for calendar in homepage_calendars %}
+            - type: ical
+              url: {{ calendar.url }}
+              name: {{ calendar.name }}
+              color: {{ calendar.color }}
+              showName: true
+{% endfor %}
+    - Cryptocurrencies:
+        icon: bitcoin
+        href: <URL>
+        widget:
+          type: coinmarketcap
+          currency: USD
+          symbols: [BTC, SOL, ETH, XRP]
+          key: <API>
+          defaultinterval: 7d

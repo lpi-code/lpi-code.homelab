@@ -33,6 +33,14 @@
     mode: 0644
   notify: Reload systemd
 
+- name: Template powertop-autotune script
+  template:
+    src: powertop_fine_tune.sh.j2
+    dest: /usr/local/bin/powertop_fine_tune.sh
+    owner: root
+    group: root
+    mode: 0755
+
 - name: Enable powertop autotune service
   systemd:
     name: powertop-autotune

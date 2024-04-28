@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# This script wait for a PASSCODE to be entered in fifo $1 and then shutdown the computer while outputting the shutdown message $2
+
+# Check if the fifo exists
+while true; do
+    # Read the passcode from the fifo
+    passcode=$(cat $1)
+
+    # Check if the passcode is correct
+    if [ "$passcode" == $PASSCODE ]; then
+        echo "Powering off in 60 seconds" | tee $2
+        sudo shutdown +1 "Home assistant order powering off in 60 seconds"
+    fi
+done
+
+# Shutdown the computer

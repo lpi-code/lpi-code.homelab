@@ -1,2 +1,44 @@
 ---
 # defaults file for web_server_setup
+web_server_setup_ports_mapping:
+  stream: 8096 # jellyfin
+  streamsearch: 5055 # jellyserr
+  torrent: 6881
+  bazarr: 6767 # bazarr
+  lidarr: 8686
+  mylar3: 8090
+  prowlarr: 9696
+  radarr: 7878
+  readarr: 8787
+  sabnzbd: 8080
+  sonarr: 8989
+  whisparr: 6969
+  crablendar: 8081
+  hass: 8123
+  authentik: 9443
+  sso: 9443
+  rss: 3002
+  home-legacy: 8123
+  joal: 7171
+
+web_server_setup_proxied_by_authentik:
+  - bazarr
+  - lidarr
+  - mylar3
+  - prowlarr
+  - radarr
+  - readarr
+  - sabnzbd
+  - sonarr
+  - whisparr
+  - monitoring
+  - home
+  - torrent
+  - tdarr
+  - menu
+  - joal
+  - books
+
+web_server_setup_https_upstream:
+  - authentik
+  - sso

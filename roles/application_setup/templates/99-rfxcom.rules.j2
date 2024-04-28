@@ -1,1 +1,1 @@
-KERNEL=="ttyACM0", OWNER="home-assistant", GROUP="home-assistant"
+KERNEL=="ttyUSB[0-9]", OWNER="home-assistant", GROUP="home-assistant", SUBSYSTEMS=="usb", ATTRS{idVendor}=="{{rfxcom_idvendor}}", ATTRS{idProduct}=="{{rfxcom_idproduct}}", SYMLINK+="rfxcom-interface"

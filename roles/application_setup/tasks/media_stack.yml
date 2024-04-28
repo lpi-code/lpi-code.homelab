@@ -1,0 +1,134 @@
+---
+- name: Set the user to create
+  ansible.builtin.set_fact:
+    user_to_setup: media_stack
+    group_to_setup: media_stack
+    homedir: /opt/media_stack
+
+- name: Setup home assistant user
+  ansible.builtin.include_tasks: setup_user.yml
+- name: Setting service information
+  ansible.builtin.set_fact:
+    service:
+      description: media_stack service
+      userhome: "{{ homedir }}"
+      username: media_stack
+      usergroup: media_stack
+      uid: "{{ created_user.uid }}"
+
+- name: Create homedir directory
+  ansible.builtin.file:
+    path: "{{ homedir }}/{{ item }}"
+    state: directory
+    owner: media_stack
+    group: media_stack
+    mode: "0755"
+  with_items:
+    - config
+    - config/gluetun
+    - config/bazarr
+    - config/jellyfin
+    - config/jellyseerr
+    - config/lidarr
+    - config/mylar3
+    - config/prowlarr
+    - config/qbittorrent
+    - config/radarr
+    - config/readarr
+    - config/sabnzbd
+    - config/sonarr
+    - config/tdarr
+    - config/tdarr/server
+    - config/tdarr/configs
+    - config/tdarr/logs
+    - config/unpackerr
+    - config/joal/clients
+    - config/calibre/config
+    - config/calibre/plugins
+    - config/calibre-web
+    - data
+
+- name: Mount and bind /mnt/main_datastore/media to   {{ homedir }}/data
+  mount:
+    path: "{{ homedir }}/data"
+    src: /mnt/main_datastore/media
+    opts: x-systemd.after=zfs-mount.service,bind
+    state: mounted
+    fstype: none
+
+- name: Create subdir in /media_stack/data
+  ansible.builtin.file:
+    path: "{{ homedir }}/{{ item }}"
+    state: directory
+    owner: media_stack
+    group: media_stack
+    mode: "0755"
+  with_items:
+    - data
+    - data/media
+    - data/media/tdarr_transcode_cache
+    - data/media/movies
+    - data/media/tv_shows
+    - data/media/ebooks
+    - data/joal/torrents/archieved
+    - data/calibre_uploads
+
+- name: Template joal config
+  ansible.builtin.template:
+    src: joal.json.j2
+    dest: "{{ homedir }}/config/joal/config.json"
+    owner: media_stack
+    group: media_stack
+    mode: "0600"
+- name: Template joal default.client
+  ansible.builtin.template:
+    src: default.client.j2
+    dest: "{{ homedir }}/config/joal/clients/default.client"
+    owner: media_stack
+    group: media_stack
+    mode: "0600"
+
+- name: Template media_stack-compose.yml
+  ansible.builtin.template:
+    src: media_stack-compose.yml.j2
+    dest: "{{ homedir }}/docker-compose.yml"
+    owner: media_stack
+    group: media_stack
+    mode: "0600"
+
+- name: Template media_stack.env file
+  ansible.builtin.template:
+    src: media_stack.env.j2
+    dest: "{{ homedir }}/.env"
+    owner: media_stack
+    group: media_stack
+    mode: "0600"
+
+- name: Template media_stack service file
+  ansible.builtin.template:
+    src: generic_compose.service.j2
+    dest: /etc/systemd/system/media_stack.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Enable media_stack service and start it
+  ansible.builtin.systemd:
+    name: media_stack
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Remove all containers
+  ansible.builtin.shell: DOCKER_HOST=unix:///run/user/{{ created_user.uid }}/podman/podman.sock /usr/local/bin/docker-compose -f {{homedir}}/docker-compose.yml down
+
+- name: Chown data with podman
+  ansible.builtin.shell:
+    cmd: sudo -u media_stack bash -c 'podman unshare chown -R media_stack:media_stack /opt/media_stack/data'
+    chdir: "{{ homedir }}"
+
+- name: Restart media_stack service
+  ansible.builtin.systemd:
+    name: media_stack
+    state: restarted

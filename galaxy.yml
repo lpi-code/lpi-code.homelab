@@ -1,0 +1,10 @@
+namespace: "lpi-code"
+name: "homelab"
+version: "0.1.0"
+readme: "README.md"
+authors:
+    - "Loïc Piernas <loic.pro@piernas.fr>"
+license:
+    - "MIT"
+
+repository: "https://www.github.com/lpi-code/lpi-code.homelab"

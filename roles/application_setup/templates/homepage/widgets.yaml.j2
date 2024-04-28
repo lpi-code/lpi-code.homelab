@@ -1,0 +1,37 @@
+- resources:
+    label: Root fs
+    refresh: 1000
+    expanded: false
+    disk: /monitored_fs/
+
+- resources:
+    label: Nextcloud Data
+    refresh: 1000
+    expanded: false
+    disk: /monitored_fs/nextcloud_data
+
+- resources:
+    label: Media Stack Data
+    refresh: 1000
+    expanded: false
+    disk: /monitored_fs/media_stack
+
+- resources:
+    label: System
+    cpu: true
+    memory: false
+    expanded: false
+    refresh: 1000
+
+- search:
+    provider: google
+    target: _blank
+    showSearchSuggestions: true
+
+- datetime:
+    locale: gb
+    text_size: md
+    format:
+      dateStyle: long
+      timeStyle: long
+      hour12: true

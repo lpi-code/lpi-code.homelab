@@ -1,6 +1,7 @@
 - name: Set the user to create
   set_fact:
     user_to_setup: monitoring
+    homedir: /opt/monitoring
 
 - name: Setup home assistant user
   include_tasks: setup_user.yml
@@ -14,7 +15,7 @@
       usergroup: monitoring
       uid: "{{ created_user.uid }}"
 
-- name: Create freshrss directory
+- name: Create monitoring directory
   file:
     path: "/opt/monitoring/{{ item }}"
     state: directory
@@ -28,11 +29,20 @@
     - freshrss/extensions
     - homepage/config
     - homepage/images
+    - monitored_fs
 
 - name: Template monitoring-compose.yml
   template:
-    src: monitoring-compose.yml.j2
+    src: monitoring/monitoring-compose.yml.j2
     dest: /opt/monitoring/docker-compose.yml
+    owner: monitoring
+    group: monitoring
+    mode: 0600
+
+- name: Template monitoring env
+  template:
+    src: monitoring/monitoring.env.j2
+    dest: /opt/monitoring/.env
     owner: monitoring
     group: monitoring
     mode: 0600
@@ -52,3 +62,45 @@
     enabled: yes
     state: restarted
     daemon_reload: yes
+
+- name: Template all files in homepage folder
+  template:
+    src: "homepage/{{ item | basename}}"
+    dest: "/opt/monitoring/homepage/config/{{ item | basename |  regex_replace('.yaml.j2', '')}}.yaml"
+    owner: monitoring
+    group: monitoring
+    mode: 0600
+  with_fileglob:
+    - ../templates/homepage/*
+
+- name: Create media_stack data monitoring endpoint
+  file:
+    path: "/mnt/main_datastore/media/.monitoring"
+    state: directory
+    owner: root
+    group: root
+    mode: "0555"
+
+- name: Create media_stack data monitoring endpoint
+  mount:
+    path: "{{ homedir }}/monitored_fs/media_stack"
+    src: /mnt/main_datastore/media/.monitoring
+    opts: x-systemd.after=zfs-mount.service,bind
+    state: mounted
+    fstype: none
+
+- name: Create nextcloud data monitoring endpoint
+  file:
+    path: "/mnt/main_datastore/nextcloud_data/.monitoring"
+    state: directory
+    owner: root
+    group: root
+    mode: "0555"
+
+- name: Create nextcloud data monitoring endpoint
+  mount:
+    path: "{{ homedir }}/monitored_fs/nextcloud_data"
+    src: /mnt/main_datastore/nextcloud_data/.monitoring
+    opts: x-systemd.after=zfs-mount.service,bind
+    state: mounted
+    fstype: none

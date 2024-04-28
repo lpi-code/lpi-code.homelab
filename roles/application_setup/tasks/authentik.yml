@@ -75,12 +75,6 @@
     group: authentik
     mode: 0644
 
-- name: Getting server lan remote ip
-  set_fact:
-    application_setup_server_ip: "{{ ansible_default_ipv4.address }}"
-  delegate_to: localhost
-  connection: local
-
 - name: Create a dummy logo if it doesn't exist
   file:
     path: /opt/authentik/media/logo.png

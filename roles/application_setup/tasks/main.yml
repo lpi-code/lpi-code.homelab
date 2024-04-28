@@ -3,6 +3,12 @@
 - name: Gather facts
   gather_facts:
 
+- name: Getting server lan remote ip
+  set_fact:
+    application_setup_server_ip: "{{ ansible_default_ipv4.address }}"
+  delegate_to: localhost
+  connection: local
+
 - name: Install podman and podman-compose
   include_tasks: podman_install.yml
 

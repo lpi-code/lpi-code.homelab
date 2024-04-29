@@ -13,7 +13,7 @@
         widget:
           type: calendar
           firstDayInWeek: monday
-          view: weekly
+          view: monthly
           maxEvents: 10
           showTime: true
           timezone: Europe/Paris
@@ -25,12 +25,3 @@
               color: {{ calendar.color }}
               showName: true
 {% endfor %}
-    - Cryptocurrencies:
-        icon: bitcoin
-        href: <URL>
-        widget:
-          type: coinmarketcap
-          currency: USD
-          symbols: [BTC, SOL, ETH, XRP]
-          key: <API>
-          defaultinterval: 7d

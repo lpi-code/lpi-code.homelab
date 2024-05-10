@@ -1,0 +1,203 @@
+- name: Set the user to create
+  set_fact:
+    user_to_setup: backup
+    homedir: /opt/backup
+
+- name: Setup backup user
+  include_tasks: setup_user.yml
+
+- name: Setting service information
+  set_fact:
+    service:
+      description: Backup service
+      userhome: /opt/backup
+      username: backup
+      usergroup: backup
+      uid: "{{ created_user.uid }}"
+
+- name: Template backup-compose.yml
+  template:
+    src: backup/backup-compose.yml.j2
+    dest: /opt/backup/docker-compose.yml
+    owner: backup
+    group: backup
+    mode: 0600
+
+- name: Template backup service file
+  template:
+    src: generic_compose.service.j2
+    dest: /etc/systemd/system/backup.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: Reload systemd
+
+- name: Create backup directory
+  file:
+    path: "/opt/backup/{{ item }}"
+    state: directory
+    owner: backup
+    group: backup
+    mode: 0755
+  with_items:
+    - backrest
+    - backrest/ssh
+
+- name: Enable acl on nextcloud zfs dataset
+  zfs:
+    name: main_datastore/nextcloud_data
+    extra_zfs_properties:
+      acltype: posixacl
+    state: present
+
+- name: Add acl read permission to backup user
+  acl:
+    path: "{{ item }}"
+    entity: backup
+    etype: user
+    permissions: rX
+    state: present
+    recursive: yes
+    default: true # Set the default acl for new files
+  with_items: "{{ backup_dir }}"
+
+- name: Add acl read permission to backup user
+  acl:
+    path: "{{ item }}"
+    entity: backup
+    etype: user
+    permissions: rX
+    state: present
+    recursive: yes
+    default: false # Set the active acl for new files
+  with_items: "{{ backup_dir }}"
+
+- name: Add acl for traversal only
+  acl:
+    path: "{{ item }}"
+    entity: backup
+    etype: user
+    permissions: rX
+    state: present
+    recursive: no
+    default: no # Set the default acl for new files
+  with_items: "{{ backup_dir_traversal }}"
+
+- name: Create a fifo dir in backup
+  file:
+    path: /opt/backup/fifo
+    state: directory
+    owner: backup
+    group: backup
+    mode: 0775
+
+- name: Test if fifo input file is created
+  stat:
+    path: /opt/backup/fifo/input
+  register: fifo_input
+
+- name: Add fifo input file
+  shell: rm -f /opt/backup/fifo/input && mkfifo /opt/backup/fifo/input
+  when: fifo_input.stat.exists == False or fifo_input.stat.isfifo == False
+
+- name: Test if fifo output file is created
+  stat:
+    path: /opt/backup/fifo/output
+  register: fifo_output
+
+- name: Add fifo output file
+  shell: rm -f /opt/backup/fifo/output && mkfifo /opt/backup/fifo/output
+  when: fifo_output.stat.exists == False or fifo_output.stat.isfifo == False
+
+- name: Set correct ownership of fifo files
+  file:
+    path: "{{ item }}"
+    owner: backup
+    group: backup
+    mode: 0660
+  with_items:
+    - /opt/backup/fifo/input
+    - /opt/backup/fifo/output
+
+- name: Template fifo script
+  template:
+    src: backup/backup-fifo-client.sh.j2
+    dest: /opt/backup/fifo/backup-fifo-client.sh
+    owner: backup
+    group: backup
+    mode: 0700
+
+- name: Create a Script dir in backup
+  file:
+    path: /opt/backup/Scripts
+    state: directory
+    owner: backup
+    group: backup
+    mode: 0755
+
+- name: Template backup-daemon server script
+  template:
+    src: backup/backup-fifo-server.py.j2
+    dest: /opt/backup/Scripts/backup-fifo-server.py
+    owner: backup
+    group: backup
+    mode: 0700
+
+- name: Add sudo rule for backup
+  lineinfile:
+    path: /etc/sudoers.d/backup
+    line: "backup ALL=(ALL) NOPASSWD: /usr/bin/systemctl start {{item}}.service"
+    create: yes
+  with_items: "{{ backup_services }}"
+
+- name: Add sudo rule for stop
+  lineinfile:
+    path: /etc/sudoers.d/backup
+    line: "backup ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop {{item}}.service"
+    create: yes
+  with_items: "{{ backup_services }}"
+
+- name: Create user systemd service directory
+  file:
+    path: "/opt/backup/.config/systemd/user"
+    state: directory
+    owner: backup
+    group: backup
+
+- name: Template backup-daemon service file
+  template:
+    src: backup/backup-fifo.service.j2
+    dest: /opt/backup/.config/systemd/user/backup-fifo.service
+    owner: backup
+    group: backup
+    mode: 0600
+
+- name: Check if SSH key exists
+  stat:
+    path: /opt/backup/backrest/ssh/id_rsa
+  register: backup_ssh_key
+
+- name: generate SSH keys for backup
+  shell: "ssh-keygen -t rsa -b 4096 -f /opt/backup/backrest/ssh/id_rsa -N ''"
+  when: not backup_ssh_key.stat.exists
+
+- name: Set correct ownership of SSH keys
+  file:
+    path: "{{ item }}"
+    owner: backup
+    group: backup
+    mode: 0600
+  with_items:
+    - /opt/backup/backrest/ssh/id_rsa
+    - /opt/backup/backrest/ssh/id_rsa.pub
+
+
+- name: Reload systemd
+  shell: "sudo -u backup XDG_RUNTIME_DIR=/run/user/{{ created_user.uid }} bash -c 'systemctl --user daemon-reload && systemctl --user --now enable backup-fifo.service'"
+
+- name: Enable backup service and start it
+  systemd:
+    name: backup
+    enabled: yes
+    state: started
+    daemon_reload: yes

@@ -12,7 +12,7 @@ services:
       retries: 5
       timeout: 5s
     volumes:
-      - ./data/database:/var/lib/postgresql/data:Z
+      - ./data/database:/var/lib/postgresql/data:z
     environment:
       - POSTGRES_PASSWORD=${PG_PASS:?database password required}
       - POSTGRES_USER=${PG_USER:-authentik}
@@ -30,7 +30,7 @@ services:
       retries: 5
       timeout: 3s
     volumes:
-      - ./data/redis:/data:Z
+      - ./data/redis:/data:z
   server:
     image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2022.11.1}
     restart: unless-stopped

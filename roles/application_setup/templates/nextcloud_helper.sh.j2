@@ -71,8 +71,10 @@ if $call_cron; then
 fi
 
 if $fix_permissions; then
-  podman unshare chown -R nextcloud:nextcloud data
-  podman unshare chown -R nextcloud:nextcloud config.php
-  podman unshare chown -R nextcloud:nextcloud .redis-session.ini
-  podman unshare chown -R nextcloud:nextcloud /mnt/main_datastore/nextcloud_data
+  podman unshare chown -R 1001:1001 data
+  podman unshare chown -R 1001:1001 config.php
+  podman unshare chown -R 1001:1001 .redis-session.ini
+  podman unshare chown -R 1001:1001 /mnt/main_datastore/nextcloud_data
+  podman unshare chown -R 1001:1001 nextcloud_html
+  podman unshare chown -R 1000:1000 redis database
 fi

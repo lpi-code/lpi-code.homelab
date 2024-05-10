@@ -38,6 +38,7 @@ web_server_setup_proxied_by_authentik:
   - menu
   - joal
   - books
+  - backup
 
 web_server_setup_https_upstream:
   - authentik

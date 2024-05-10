@@ -36,3 +36,8 @@
   include_tasks: media_stack.yml
   tags:
     - media_stack
+
+- name: Install backup tools
+  include_tasks: backup.yml
+  tags:
+    - backup

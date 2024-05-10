@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Define FIFO paths
+INPUT_FIFO="{{ backup_fifo_input }}"
+OUTPUT_FIFO="{{ backup_fifo_output }}"
+
+# Ensure the script receives exactly two arguments: service name and action
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <service_name> <action>"
+    echo "action must be 'start' or 'stop'"
+    exit 1
+fi
+
+service_name=$1
+action=$2
+
+# Validate action
+if [[ "$action" != "start" && "$action" != "stop" ]]; then
+    echo "Invalid action: $action"
+    echo "Action must be 'start' or 'stop'"
+    exit 1
+fi
+
+# Send command to the input FIFO
+echo "$service_name $action" > "$INPUT_FIFO"
+
+# Function to wait for a response with a timeout
+wait_for_response() {
+    local timeout=10  # Timeout after 10 seconds
+    local start_time=$(date +%s)
+
+    while true; do
+        if read -r line < "$OUTPUT_FIFO"; then
+            echo "$line"
+            break
+        fi
+        local current_time=$(date +%s)
+        if (( current_time - start_time > timeout )); then
+            echo "Error: Timeout waiting for response"
+            return 1
+        fi
+        sleep 1
+    done
+}
+
+# Read and handle the response
+response=$(wait_for_response)
+if [[ "$response" == Error* ]]; then
+    echo "Error occurred: $response"
+    exit 1
+else
+    echo "Success: $response"
+fi

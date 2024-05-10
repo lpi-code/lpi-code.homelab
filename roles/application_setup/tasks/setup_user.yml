@@ -34,7 +34,8 @@
 - name: Enable linger with loginctl
   ansible.builtin.command: loginctl enable-linger {{ user_to_setup }}
 - name: Enable podman socket for user
-  ansible.builtin.command: sudo -u {{ user_to_setup }} XDG_RUNTIME_DIR=/run/user/{{ created_user.uid }} systemctl --user enable --now podman.socket
+  ansible.builtin.command: sudo -u {{ user_to_setup }} XDG_RUNTIME_DIR=/run/user/{{ created_user.uid }} systemctl --user enable --now podman
+  ignore_errors: yes
 - name: Template bashrc
   ansible.builtin.template:
     src: bashrc.j2

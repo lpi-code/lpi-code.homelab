@@ -125,8 +125,16 @@
 
 - name: Chown data with podman
   ansible.builtin.shell:
-    cmd: sudo -u media_stack bash -c 'podman unshare chown -R media_stack:media_stack /opt/media_stack/data'
+    cmd: sudo -u media_stack bash -c 'podman unshare chown -R media_stack:media_stack /opt/media_stack/data/{{ item }}'
     chdir: "{{ homedir }}"
+  with_items:
+    - calibre_uploads  
+    - downloads  
+    - jellyfin_transcode  
+    - joal  
+    - media  
+    - sabnzbd_incomplete
+    - torrents
 
 - name: Restart media_stack service
   ansible.builtin.systemd:

@@ -36,6 +36,8 @@ def manage_service(service_name, action):
     try:
         if action == "stop":
             execute_command(f"sudo /usr/bin/systemctl stop {service_name}.service")
+            if service_name == "authentik":
+                execute_command(f"/opt/authentik/scripts/acl_mask_updater.sh")
         elif action == "start":
             execute_command(f"sudo /usr/bin/systemctl start {service_name}.service")
         write_output(f"Success: {action} action completed for {service_name}")

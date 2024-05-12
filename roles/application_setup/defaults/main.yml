@@ -3,6 +3,8 @@
 backup_dir:
   - /opt/authentik/certs
   - /opt/authentik/custom-templates
+  - /opt/authentik/data/database
+  - /opt/authentik/data/redis
   - /opt/authentik/data
   - /opt/authentik/media
   - /opt/home-assistant/certs

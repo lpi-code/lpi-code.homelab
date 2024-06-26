@@ -1,0 +1,8 @@
+---
+# defaults file for monitoring
+monitoring_tcp_targets: []
+# example :
+#  - name: "TCP target"
+#    host: "localhost"
+#    port: 80
+ 

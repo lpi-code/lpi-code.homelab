@@ -1,0 +1,12 @@
+# Ansible playbook to setup a new OS
+# Path: playbooks/os_setup.yml
+---
+
+- name: play
+  hosts: all
+  gather_facts: True
+
+  tasks:
+    - name: Setup monitoring
+      include_role:
+        name: monitoring

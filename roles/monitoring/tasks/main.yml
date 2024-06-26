@@ -1,0 +1,42 @@
+---
+# tasks file for monitoring
+- name: Include defaults
+  include_vars: ../web_server_setup/defaults/main.yml
+
+- name: Include vars
+  include_vars: ../web_server_setup/vars/main.yml
+
+- name: Install pip3
+  ansible.builtin.package:
+    name: python3-pip
+    state: present
+
+- name: Install uptime_kuma_api lib on the host
+  pip:
+    name: uptime_kuma_api
+    state: present
+    executable: "pip3"
+
+- name: Monitor sites
+  lucasheld.uptime_kuma.monitor:
+    api_url: "http://localhost:3001"
+    api_username: "{{ uptime_kuma_username }}"
+    api_password: "{{ uptime_kuma_password }}"
+    type: http
+    name: "Public {{ item }}"
+    url: "https://{{ item }}.{{ web_domain }}"
+    state: present
+  with_items: "{{ sites }}"
+
+- name: Monitor TCP target
+  lucasheld.uptime_kuma.monitor:
+    api_url: "http://localhost:3001"
+    api_username: "{{ uptime_kuma_username }}"
+    api_password: "{{ uptime_kuma_password }}"
+    type: port
+    name: "{{ item['name'] }}"
+    hostname: "{{ item['host'] }}"
+    port: "{{ item['port'] }}"
+    state: present
+  with_items: "{{ monitoring_tcp_targets }}"
+  

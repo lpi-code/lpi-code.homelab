@@ -6,6 +6,7 @@
       - nginx
       - certbot
       - python3-certbot-nginx
+      - python3-certbot-dns-cloudflare
     state: latest
 
 - name: Create a dns updater user
@@ -36,11 +37,22 @@
 #     full_sites: "{{ full_sites | default('') }}{{ ',' if full_sites is defined else '' }}{{ item }}.{{ web_domain }}"
 #   with_items: "{{ sites }}"
     
+- name: Install certbot-dns-cloudflare
+  dnf:
+    name: python3-certbot-dns-cloudflare
+    state: latest
 
+- name: Generate cloudflare secret file
+  template:
+    src: cloudflare.ini.j2
+    dest: /root/cloudflare.ini
+    owner: root
+    group: root
+    mode: 0600
 
 - name: Generate ssl certificate
   shell: 
-    cmd: "{% for item in sites %}certbot certonly --nginx -d {{ item }}.{{ web_domain }} -m {{letsencrypt_email}} --agree-tos --non-interactive &&{% endfor %} true"
+    cmd: "{% for item in sites %}certbot certonly --dns-cloudflare-credentials /root/cloudflare.ini --dns-cloudflare -d {{ item }}.{{ web_domain }} -m {{letsencrypt_email}} --agree-tos --non-interactive --cert-name {{ item }}.{{ web_domain }} &&{% endfor %} true"
   #"certbot certonly --nginx -d {{ full_sites }} -m {{letsencrypt_email}} --agree-tos --non-interactive"
   tags:
     - certs

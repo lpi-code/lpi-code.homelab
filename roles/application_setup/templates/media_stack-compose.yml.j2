@@ -50,6 +50,7 @@ services:
       - "${WEBUI_PORT_SONARR:?err}:8989"        # WebUI Portal: Sonarr
       - "${WEBUI_PORT_WHISPARR:?err}:6969"      # WebUI Portal: Whisparr
       - "${WEBUI_PORT_QBITTORRENT:?err}:${WEBUI_PORT_QBITTORRENT:?err}"   # WebUI Portal: qBittorrent
+      - "${WEBUI_PORT_RDTCLIENT:?err}:${WEBUI_PORT_RDTCLIENT:?err}"   # WebUI Portal: Rdtclient
       - "${WEBUI_PORT_JOAL:?err}:${WEBUI_PORT_JOAL:?err}"
       - "${WEBUI_PORT_CALIBRE:?err}:${WEBUI_PORT_CALIBRE:?err}"
       - "${WEBUI_PORT_CALIBRE_WEB:?err}:8083"
@@ -163,6 +164,7 @@ services:
       - ${FOLDER_FOR_CONFIGS:?err}/jellyfin:/config:z
       - ${FOLDER_FOR_MEDIA:?err}/jellyfin_transcode:/config/data/transcodes:Z
       - ${FOLDER_FOR_MEDIA:?err}/media:/data/media:z
+      - ${FOLDER_FOR_MEDIA_SECONDARY:?err}/media:/data/media_secondary:z
     environment:
       - PUID=${PUID:?err}
       - PGID=${PGID:?err}
@@ -308,6 +310,33 @@ services:
 ## Do Not Change Network for qBittorrent
 ## qBittorrent MUST always use a VPN / Secure Internet connection
     network_mode: "service:gluetun"
+
+###########################################################################
+###########################################################################
+##
+##  Docker Compose File: RDTClient (RogerFar)
+##  Function: Movie Library Manager
+##
+##  Documentation: https://github.com/rogerfar/rdt-client
+##
+###########################################################################
+###########################################################################
+  rdtclient:
+    container_name: rdtclient
+    volumes:
+      - ${FOLDER_FOR_MEDIA:?err}:/data:z
+      - ${FOLDER_FOR_CONFIGS:?err}:/data/db:z
+    environment:    
+      - PUID=${PUID:?err}
+      - PGID=${PGID:?err}
+    image: rogerfar/rdtclient
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+    network_mode: "service:gluetun"
+
 
 ###########################################################################
 ###########################################################################

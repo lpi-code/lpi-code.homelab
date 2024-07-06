@@ -20,6 +20,7 @@ web_server_setup_ports_mapping:
   rss: 3002
   home-legacy: 8123
   joal: 7171
+  kanban: 8191
 
 web_server_setup_proxied_by_authentik:
   - bazarr
@@ -40,6 +41,8 @@ web_server_setup_proxied_by_authentik:
   - books
   - backup
   - esphome
+  - links
+  - torrent2
 
 web_server_setup_https_upstream:
   - authentik

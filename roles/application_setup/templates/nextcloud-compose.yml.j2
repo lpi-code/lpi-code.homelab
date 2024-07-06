@@ -32,9 +32,9 @@ services:
     volumes:
       # Uncomment and specify your data directory (if you have a mounted hard drive)
       # !! ALWAYS make a backup of your data before such manipulations !!
-      - ./data:/var/www/html/data:z
+      - ./data:/var/www/html/data
       - /opt/nextcloud/nextcloud_html:/var/www/html:z
-      - /opt/nextcloud/mnt:/mnt:z
+      - /opt/nextcloud/mnt:/mnt
       - /opt/nextcloud/.redis-session.ini:/usr/local/etc/php/conf.d/redis-session.ini:z
       # Extensions
     ports:

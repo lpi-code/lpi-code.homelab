@@ -7,6 +7,7 @@
 
 - name: Setup home assistant user
   ansible.builtin.include_tasks: setup_user.yml
+
 - name: Setting service information
   ansible.builtin.set_fact:
     service:
@@ -47,11 +48,20 @@
     - config/calibre/plugins
     - config/calibre-web
     - data
+    - data_secondary
 
 - name: Mount and bind /mnt/main_datastore/media to   {{ homedir }}/data
   mount:
     path: "{{ homedir }}/data"
     src: /mnt/main_datastore/media
+    opts: x-systemd.after=zfs-mount.service,bind
+    state: mounted
+    fstype: none
+
+- name: Mount and bind /mnt/secondary_datastore/media_secondary to   {{ homedir }}/data_secondary
+  mount:
+    path: "{{ homedir }}/data_secondary"
+    src: /mnt/secondary_datastore/media_secondary
     opts: x-systemd.after=zfs-mount.service,bind
     state: mounted
     fstype: none
@@ -72,6 +82,9 @@
     - data/media/ebooks
     - data/joal/torrents/archieved
     - data/calibre_uploads
+    - data_secondary/media/movies
+    - data_secondary/media/tv_shows
+    - data/media/intros
 
 - name: Template joal config
   ansible.builtin.template:
@@ -135,6 +148,7 @@
     - media  
     - sabnzbd_incomplete
     - torrents
+    - ../data_secondary
 
 - name: Restart media_stack service
   ansible.builtin.systemd:

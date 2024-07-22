@@ -23,6 +23,14 @@
     group: backup
     mode: 0600
 
+- name: Template backup env
+  template:
+    src: backup/backup.env.j2
+    dest: /opt/backup/.env
+    owner: backup
+    group: backup
+    mode: 0600
+
 - name: Template backup service file
   template:
     src: generic_compose.service.j2
@@ -60,6 +68,8 @@
     recursive: yes
     default: true # Set the default acl for new files
   with_items: "{{ backup_dir }}"
+  tags:
+    - acl
 
 - name: Add acl read permission to backup user
   acl:
@@ -71,6 +81,8 @@
     recursive: yes
     default: false # Set the active acl for new files
   with_items: "{{ backup_dir }}"
+  tags:
+    - acl
 
 - name: Add acl for traversal only
   acl:
@@ -82,6 +94,8 @@
     recursive: no
     default: no # Set the default acl for new files
   with_items: "{{ backup_dir_traversal }}"
+  tags:
+    - acl
 
 - name: Create a fifo dir in backup
   file:
@@ -164,6 +178,76 @@
     owner: backup
     group: backup
 
+# main_datastore/apple_backup
+- name: bind mount /opt/backup/apple_backup from /mnt/main_datastore/apple_backup
+  mount:
+    path: /opt/backup/apple_backup
+    src: /mnt/main_datastore/apple_backup
+    opts: x-systemd.after=zfs-mount.service,bind,context=system_u:object_r:container_file_t:s0
+    state: mounted
+    fstype: none
+- name: Create user apple subdir
+  file:
+    path: /opt/backup/apple_backup/{{ item['name'] }}
+    state: directory
+    owner: backup
+    group: backup
+    mode: 0755
+  with_items: "{{ apple_backup_simple_users }}"
+
+- name: Create apple_backup_config dir
+  file:
+    path: /opt/backup/apple_backup_config
+    state: directory
+    owner: backup
+    group: backup
+    mode: 0700
+
+- name: Template entypoint.sh
+  template:
+    src: backup/entrypoint.sh.j2
+    dest: /opt/backup/apple_backup_config/entrypoint.sh
+    owner: backup
+    group: backup
+    mode: 0700
+
+- name: Install avahi and nss
+  package:
+    name: 
+      - avahi
+      - nss-mdns
+    state: present
+
+- name: Template afpd.service
+  template:
+    src: backup/afpd.service.j2
+    dest: /etc/avahi/services/afpd.service
+  notify: Reload avahi
+
+- name: Template /etc/nsswitch.conf
+  template:
+    src: backup/nsswitch.conf.j2
+    dest: /etc/nsswitch.conf
+  notify: Reload nsswitch
+
+- name: Enable and start avahi
+  systemd:
+    name: avahi-daemon
+    enabled: yes
+    state: started
+
+- name: Change unprivileged port range from 512
+  lineinfile:
+    path: /etc/sysctl.conf
+    line: "net.ipv4.ip_unprivileged_port_start=512"
+    regexp: "^net.ipv4.ip_unprivileged_port_start"
+    create: yes
+  notify: Reload sysctl
+
+
+- name: Force run handler
+  meta: flush_handlers
+
 - name: Template backup-daemon service file
   template:
     src: backup/backup-fifo.service.j2
@@ -194,6 +278,7 @@
 
 - name: Reload systemd
   shell: "sudo -u backup XDG_RUNTIME_DIR=/run/user/{{ created_user.uid }} bash -c 'systemctl --user daemon-reload && systemctl --user --now enable backup-fifo.service'"
+
 
 - name: Enable backup service and start it
   systemd:

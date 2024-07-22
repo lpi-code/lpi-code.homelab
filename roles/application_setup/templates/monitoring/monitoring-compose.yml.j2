@@ -3,6 +3,7 @@ services:
     image: louislam/uptime-kuma:1
     volumes:
       - ./uptime_kuma_data:/app/data:z
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - 3001:3001
     restart: unless-stopped

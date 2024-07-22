@@ -51,3 +51,12 @@
 - name: Create media zfs dataset
   shell: "zfs create secondary_datastore/media_secondary -o mountpoint=/mnt/secondary_datastore/media_secondary -o quota={{ media_secondary_quota }}"
   when: media_secondary_dataset.rc != 0
+
+- name: Check if apple_backup dataset exists
+  shell: "zfs list -H -o name main_datastore/apple_backup"
+  register: apple_backup
+  ignore_errors: yes
+
+- name: Create media zfs dataset
+  shell: "zfs create main_datastore/apple_backup -o mountpoint=/mnt/main_datastore/apple_backup -o quota={{ apple_backup_quota }}"
+  when: apple_backup.rc != 0

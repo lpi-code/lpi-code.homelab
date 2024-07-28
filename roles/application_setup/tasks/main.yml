@@ -51,3 +51,8 @@
   include_tasks: gitlab.yml
   tags:
     - gitlab
+
+- name: Install cashfactory
+  include_tasks: cashfactory.yml
+  tags:
+    - cashfactory

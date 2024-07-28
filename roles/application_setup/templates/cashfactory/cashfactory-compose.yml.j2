@@ -1,0 +1,249 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    restart: always
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ${FOLDER_FOR_CONFIGS:?err}/gluetun:/gluetun:z
+    environment:
+      - PUID=${PUID:?err}
+      - PGID=${PGID:?err}
+      - TZ=${TIMEZONE:?err}
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER:?err}
+      - OPENVPN_USER=${VPN_USERNAME:?err}
+      - OPENVPN_PASSWORD=${VPN_PASSWORD:?err}
+      - SERVER_REGION=${SERVER_REGION}
+      - SERVER_CITIES=${SERVER_CITIES}
+      - SERVER_HOSTNAMES=${SERVER_HOSTNAMES}
+      - FIREWALL_OUTBOUND_SUBNETS=${ROUTER_IP:?err}/32
+      - OPENVPN_CUSTOM_CONFIG=${OPENVPN_CUSTOM_CONFIG}
+      - VPN_TYPE=${VPN_TYPE}
+      - VPN_ENDPOINT_IP=${VPN_ENDPOINT_IP}
+      - VPN_ENDPOINT_PORT=${VPN_ENDPOINT_PORT}
+      - SERVER_COUNTRIES=${SERVER_COUNTRIES}
+      - WIREGUARD_PUBLIC_KEY=${WIREGUARD_PUBLIC_KEY}
+      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
+      - WIREGUARD_PRESHARED_KEY=${WIREGUARD_PRESHARED_KEY}
+      - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES}
+      - HTTPPROXY=on
+      - SHADOWSOCKS=on
+    networks:
+      - vpn-network
+
+
+  Earnapp:
+    depends_on:
+        - gluetun
+    image: fazalfarhan01/earnapp:lite
+    volumes:
+        - ${FOLDER_FOR_CONFIGS:?err}/earnapp-data:/etc/earnapp:z
+    restart: always
+    environment:
+        - EARNAPP_UUID=$EARNAPP_DEVICE_ID
+        - PUID=${PUID2:?err}
+        - PGID=${PGID2:?err}
+    networks:
+        - vpn-network
+    #network_mode: "service:gluetun"
+    #End of Earnapp section
+
+
+    #Start of HoneyGain section (remove this if HoneyGain not wanted)
+    # variables to define in .env file :
+    # HONEYGAIN_EMAIL : Your Honeygain account email
+    # HONEYGAIN_PASSWD : Your Honeygain account password 
+    # DEVICE_NAME : This computer name (for display on dashboard)
+  Honeygain:
+    depends_on:
+        - gluetun
+    image: honeygain/honeygain
+    command: -tou-accept -email $HONEYGAIN_EMAIL -pass '$HONEYGAIN_PASSWD' -device $DEVICE_NAME
+    restart: always
+    networks:
+        - vpn-network
+    environment:
+        - PUID=${PUID2:?err}
+        - PGID=${PGID2:?err}
+#End of HoneyGain section
+
+#Start of IproyalPawns section (remove this if IproyalPawns not wanted)
+# variables to define in .env file :
+# IPROYALPAWNS_EMAIL : Your IproyalPawns account email
+# IPROYALPAWNS_PASSWD : Your IproyalPawns account password 
+# DEVICE_NAME : This computer name (for display on dashboard)
+  IproyalPawns:
+    depends_on:
+        - gluetun
+    image: iproyal/pawns-cli:latest
+    command: -email=$IPROYALPAWNS_EMAIL -password='$IPROYALPAWNS_PASSWD' -device-name=$DEVICE_NAME -accept-tos
+    restart: always
+    networks:
+        - vpn-network
+    environment:
+        - PUID=${PUID2:?err}
+        - PGID=${PGID2:?err}
+#End of IproyalPawns section
+
+#Start of Peer2profit section (remove this if Peer2profit not wanted)
+# variables to define in .env file :
+# PEER2PROFIT_EMAIL : Your Peer2profit account email
+
+#Start of Packetstream section (remove this if Packetstream not wanted)
+# variables to define in .env file :
+# PACKETSTREAM_CID : Your Packetstream CID (available in packetstream dashboard)
+  Packetstream_PsClient:
+    depends_on:
+        - gluetun
+    image: packetstream/psclient:latest
+    restart: always
+    environment:
+        - CID=$PACKETSTREAM_CID
+        - PUID=${PUID2:?err}
+        - PGID=${PGID2:?err}
+    networks:
+        - vpn-network
+#End of Packetstream section
+  
+#Start of Bitping section (remove this if Bitping not wanted)
+  Bitping:
+    depends_on:
+        - gluetun
+    image: bitping/bitpingd:latest
+    restart: always
+    volumes:
+        - ./config/bitping:/root/.bitping:z
+    environment:
+        - PUID=${PUID2:?err}
+        - PGID=${PGID2:?err}
+        - BITPING_EMAIL=${BITPING_EMAIL:?err}
+        - BITPING_PASSWORD=${BITPING_PASSWORD:?err}
+    networks:
+        - vpn-network
+#End of Bitping section     
+
+#Start of TraffMonetizer section (remove this if TraffMonetizer not wanted)
+# variables to define in .env file :
+# TRAFFMONETIZER_TOKEN : Your application token (available in TraffMonetizer dashboard)
+  TraffMonetizer:
+    depends_on:
+        - gluetun
+    image: traffmonetizer/cli_v2:latest
+    restart: always
+    command: start accept --token ${TRAFFMONETIZER_TOKEN}
+    network_mode: "service:gluetun"
+    environment:
+        - PUID=${PUID2:?err}
+        - PGID=${PGID2:?err}
+#End of Packetstream section   
+
+#Start of Repocket section (remove this if Repocket not wanted)
+# variables to define in .env file :
+# RP_EMAIL : Your application mail 
+# RP_API_KEY : Your application api key (available in repocket dashboard)
+  Repocket:
+    depends_on:
+        - gluetun
+    image: repocket/repocket:latest
+    restart: always
+    environment:
+        - RP_EMAIL
+        - RP_API_KEY
+        - PUID=${PUID2:?err}
+        - PGID=${PGID2:?err}
+    network_mode: "service:gluetun"
+#End of Repocket section    
+
+#Start of Proxylite section (remove this if Proxylite not wanted)
+# variables to define in .env file :
+# PROXYLITE_USER_ID : Your application use id (available in proxylite dashboard)
+  Proxylite:
+    depends_on:
+        - gluetun
+    image: proxylite/proxyservice:latest
+    restart: always
+    environment:
+        - USER_ID=$PROXYLITE_USER_ID
+        - PUID=${PUID2:?err}
+        - PGID=${PGID2:?err}
+    network_mode: "service:gluetun"
+#End of Proxylite section 
+
+#Start of Proxyrack section (remove this if Proxyrack not wanted)
+# variables to define in .env file :
+# PROXYRACK_HOST_UUID : Your host UUID (random string), you can generate it using the command : cat /dev/urandom | LC_ALL=C tr -dc 'A-F0-9' | dd bs=1 count=64 2>/dev/null
+  Proxyrack_Residential:
+    depends_on:
+        - gluetun
+    image: proxyrack/pop:latest
+    restart: always
+    environment:
+        - UUID=$PROXYRACK_HOST_UUID
+        - PUID=${PUID2:?err}
+        - PGID=${PGID2:?err}
+    networks:
+        - vpn-network
+
+  Proxyrack_VPN:
+    depends_on:
+        - gluetun
+    image: proxyrack/pop:latest
+    restart: always
+    environment:
+        - UUID=$PROXYRACK_HOST_UUID
+        - PUID=${PUID2:?err}
+        - PGID=${PGID2:?err}
+    network_mode: "service:gluetun"
+#End of Proxyrack section 
+
+
+#Start of Cloudcollab section (remove if not wanted) => currently under evaluation by dev, seems not working well
+# Cloudcollab:
+#     depends_on:
+#         - gluetun
+#        user: 1001:1001
+#     image: cloudcollabapp/peer:latest
+#     restart: always
+#     networks:
+#         default:
+#             ipv4_address: 172.106.0.120
+#End of Cloudcollab section
+
+#Start of EarnFm section (remove this if EarnFm not wanted)
+# variables to define in .env file :
+# EARNFM_APIKEY : Your API key (available in earnfm dashboard -> more)
+  EarnFm_Client_VPN:
+    depends_on:
+        - gluetun
+    user: 1001:1001
+    image: earnfm/earnfm-client:latest
+    restart: always
+    environment:
+        - EARNFM_TOKEN=$EARNFM_APIKEY
+        - PUID=${PUID2:?err}
+        - PGID=${PGID2:?err}
+    network_mode: "service:gluetun"
+
+  EarnFm_Client_Residential:
+    depends_on:
+        - gluetun
+    user: 1001:1001
+    image: earnfm/earnfm-client:latest
+    restart: always
+    environment:
+        - EARNFM_TOKEN=$EARNFM_APIKEY
+        - PUID=${PUID2:?err}
+        - PGID=${PGID2:?err}
+#End of EarnFm section
+networks:
+  vpn-network:
+    name: vpn-network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: ${DOCKER_SUBNET:?err}
+        gateway: ${DOCKER_GATEWAY:?err}

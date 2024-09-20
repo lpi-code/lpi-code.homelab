@@ -1,0 +1,41 @@
+- name: Set the user to create
+  ansible.builtin.set_fact:
+    user_to_setup: game
+    group_to_setup: game
+    homedir: /opt/game
+
+- name: Setup game user
+  ansible.builtin.include_tasks: setup_user.yml
+
+- name: Setting service information
+  ansible.builtin.set_fact:
+    service:
+      description: game container service
+      userhome: "{{ homedir }}"
+      username: game
+      usergroup: game
+      uid: "{{ created_user.uid }}"
+
+- name: Template game-compose.yml
+  ansible.builtin.template:
+    src: game/game-compose.yml.j2
+    dest: /opt/game/docker-compose.yml
+    owner: game
+    group: game
+    mode: 0600
+
+- name: Template game service file
+  ansible.builtin.template:
+    src: generic_compose.service.j2
+    dest: /etc/systemd/system/game.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: Reload systemd
+
+- name: Enable and start game service
+  ansible.builtin.systemd:
+    name: game
+    enabled: yes
+    state: restarted
+    daemon_reload: yes

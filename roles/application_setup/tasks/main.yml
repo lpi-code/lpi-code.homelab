@@ -56,3 +56,8 @@
   include_tasks: cashfactory.yml
   tags:
     - cashfactory
+
+- name: Install game servers
+  include_tasks: game.yml
+  tags:
+    - game

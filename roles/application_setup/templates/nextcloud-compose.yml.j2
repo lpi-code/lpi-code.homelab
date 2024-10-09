@@ -45,7 +45,52 @@ services:
     # Make internal www-data user use nextcloud user id on the host
     user: "1001:1001"
     # Uid map
-    # Make internal www-data user use nextcloud user id on the hosts
+    # Make internal www-data user use nextcloud user id on the host
+
+  onlyoffice-documentserver:
+    image: docker.io/onlyoffice/documentserver
+    depends_on:
+      - onlyoffice-postgresql
+      - onlyoffice-rabbitmq
+    environment:
+      - DB_TYPE=postgres
+      - DB_HOST=onlyoffice-postgresql
+      - DB_PORT=5432
+      - DB_NAME=onlyoffice
+      - DB_USER=onlyoffice
+      - AMQP_URI=amqp://guest:guest@onlyoffice-rabbitmq
+      # Uncomment strings below to enable the JSON Web Token validation.
+      - JWT_ENABLED=true
+      - JWT_SECRET=${ONLYOFFICE_JWT_SECRET}
+      - JWT_HEADER=Authorization
+      - JWT_IN_BODY=true
+    ports:
+      - "8082:80"
+    stdin_open: false
+    restart: always
+    stop_grace_period: 60s
+    volumes:
+       - ./onlyoffice/data:/var/www/onlyoffice/Data:z
+       #- /var/log/onlyoffice
+       - ./onlyoffice/files:/var/lib/onlyoffice/documentserver/App_Data/cache/files:z
+       - ./onlyoffice/files-example:/var/www/onlyoffice/documentserver-example/public/files:z
+       - ./onlyoffice/fonts/:/usr/share/fonts:z
+       
+  onlyoffice-rabbitmq:
+    container_name: onlyoffice-rabbitmq
+    image: rabbitmq
+    restart: always
+
+  onlyoffice-postgresql:
+    container_name: onlyoffice-postgresql
+    image: postgres:12
+    environment:
+      - POSTGRES_DB=onlyoffice
+      - POSTGRES_USER=onlyoffice
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    restart: always
+    volumes:
+      - ./onlyoffice/database:/var/lib/postgresql/data:z
   crablendar:
     image: docker.io/lpicode/crablendar:latest
     env_file: .env

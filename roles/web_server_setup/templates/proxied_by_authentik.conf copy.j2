@@ -10,7 +10,7 @@ server {
 
     # 301 redirect to HTTPS
     location / {
-            return 301 https://$host$request_uri;
+            return 301 https://$host$request_uri{{ redirect_params | default('') }};
     }
 }
 server {
@@ -24,33 +24,27 @@ server {
     ssl_certificate /etc/letsencrypt/live/{{item}}.{{ web_domain }}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/{{item}}.{{ web_domain }}/privkey.pem;
 
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     client_max_body_size 0;
-    
+ 
     location / {
-        
         proxy_pass https://authentik;
         auth_request_set $authentik_auth $upstream_http_authorization;
         proxy_set_header Authorization $authentik_auth;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Real-IP $remote_addr;
+        {% if host_header %}
+        proxy_set_header Host {{ host_header }};
+        {% else %}
         proxy_set_header Host $host;
+        {% endif %}
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $connection_upgrade_keepalive;
         proxy_buffers 10 512k;
         proxy_buffer_size 256k;
         proxy_busy_buffers_size 512k;
-        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-{% if item in cors %}
-{% for domain in cors[item] %}
-        if ($http_origin ~* "^https://{{ domain }}.{{ web_domain }}$") {
-            add_header 'Access-Control-Allow-Origin' $http_origin always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
-            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range' always;
-            add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
-        }
-{% endfor %}
-{% endif %}
+
         
     }
 

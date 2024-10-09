@@ -155,6 +155,8 @@
   with_items: "{{ sites }}"
   when: item in web_server_setup_proxied_by_authentik
 
+
+
 - name: Enable sites 
   file:
     src: /etc/nginx/sites-available/{{item}}.conf

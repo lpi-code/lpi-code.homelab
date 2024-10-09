@@ -175,6 +175,8 @@
 
 - name: Fix permissions in nextcloud container
   shell: "sudo -u nextcloud /opt/nextcloud/nextcloud_helper.sh -f /opt/nextcloud/docker-compose.yml --fix-permissions"
+  tags:
+    - permissions-fix
 # run as nextcloud user
 # - name: Enable face recognition
 #   shell: "sudo -u nextcloud DOCKER_HOST=unix:///run/user/{{ nextcloud_user.uid }}/podman/podman.sock /usr/local/bin/docker-compose -f /opt/nextcloud/docker-compose.yml exec -T nextcloud php /var/www/html/occ face:setup --model 1"

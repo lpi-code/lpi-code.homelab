@@ -1,0 +1,8 @@
+CREATE DATABASE IF NOT EXISTS linkstack; 
+CREATE DATABASE IF NOT EXISTS shlink;
+
+CREATE USER IF NOT EXISTS 'linkstack'@'%' IDENTIFIED BY '{{ linkstack_db_password }}';
+CREATE USER IF NOT EXISTS 'shlink'@'%' IDENTIFIED BY '{{ shlink_db_password }}';
+
+GRANT ALL PRIVILEGES ON linkstack.* TO 'linkstack'@'%';
+GRANT ALL PRIVILEGES ON shlink.* TO 'shlink'@'%';

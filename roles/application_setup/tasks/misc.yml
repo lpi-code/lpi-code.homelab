@@ -32,6 +32,23 @@
     group: misc
     mode: 0600
 
+- name: Create sql folder
+  ansible.builtin.file:
+    path: /opt/misc/sql
+    state: directory
+    owner: misc
+    group: misc
+    mode: '0755'
+
+- name: Template sql file
+  ansible.builtin.template:
+    src: misc/misc-init.sql.j2
+    dest: /opt/misc/sql/init.sql
+    owner: misc
+    group: misc
+    mode: 0755
+
+
 - name: Template misc service file
   ansible.builtin.template:
     src: generic_compose.service.j2
@@ -47,3 +64,10 @@
     enabled: yes
     state: restarted
     daemon_reload: yes
+
+#quick and dirty way to wait for the service to start
+- name: Wait 20 seconds for the service to start
+  shell: sleep 20
+
+- name: Run linkstack migration
+  ansible.builtin.shell: DOCKER_HOST=unix:///run/user/{{ created_user.uid }}/podman/podman.sock /usr/local/bin/docker-compose -f {{homedir}}/docker-compose.yml exec linkstack php82 artisan migrate 

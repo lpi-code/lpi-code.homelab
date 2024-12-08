@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# To be run as authentik user with sticky bit 
+# Start authentik
+DB_PATH=/opt/authentik/data/database
+
+export DOCKER_HOST=unix:///run/user/{{ created_user.uid }}/podman/podman.sock
+# Fix permissions
+podman unshare setfacl -R --mask -m 'm::rX' $DB_PATH

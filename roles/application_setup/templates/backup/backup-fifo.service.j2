@@ -1,0 +1,11 @@
+[Unit]
+Description=Backup service for shutting down other services
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+ExecStart=/opt/backup/Scripts/backup-fifo-server.py
+
+[Install]
+WantedBy=default.target

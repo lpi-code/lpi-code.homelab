@@ -3,6 +3,7 @@ services:
     image: louislam/uptime-kuma:1
     volumes:
       - ./uptime_kuma_data:/app/data:z
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - 3001:3001
     restart: unless-stopped
@@ -35,9 +36,9 @@ services:
     image: ghcr.io/gethomepage/homepage:latest
     container_name: homepage
     volumes:
-      - ./homepage/config:/app/config:Z
-      - ./homepage/images:/app/public/images:Z
-      - ./monitored_fs:/monitored_fs:Zro
+      - ./homepage/config:/app/config:z
+      - ./homepage/images:/app/public/images:z
+      - ./monitored_fs:/monitored_fs:z,ro
     ports:
       - 3003:3000
     extra_hosts:

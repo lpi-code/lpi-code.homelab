@@ -1,0 +1,8 @@
+#!/bin/bash
+set -e
+
+# Repeat for all your accounts
+{% for user in  apple_backup_simple_users %}
+bash -c "sleep 10 && add-account {{ user['name']}} {{ user['password']}} '{{ apple_backup_name }}'  /timemachine/{{ user['name']}} && echo Added {{ user['name']}}" &
+{% endfor %}
+/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

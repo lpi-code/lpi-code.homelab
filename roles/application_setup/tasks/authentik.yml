@@ -131,3 +131,38 @@
     line: 'AUTHENTIK_BOOTSTRAP_PASSWORD='
     state: absent
   when: authentik_db_exists == false
+
+- name: Create Scripts dir
+  file:
+    path: /opt/authentik/scripts
+    state: directory
+    owner: authentik
+    group: authentik
+    mode: 0755
+
+- name: Template acl mask updater
+  template:
+    src: authentik/acl_mask_updater.sh.j2
+    dest: /opt/authentik/scripts/acl_mask_updater.sh
+    owner: authentik
+    group: authentik
+    # sticky bit
+    mode: 01770
+
+- name: Check if backup user exists
+  command: id backup
+  register: backup_user
+  ignore_errors: true
+  changed_when: false
+  failed_when: false
+
+- name: Add execution permission to backup user with acl
+  acl:
+    path: /opt/authentik/scripts/acl_mask_updater.sh
+    entity: backup
+    etype: user
+    permissions: rx
+    state: present
+    recursive: no
+    default: no
+  when: backup_user.rc == 0

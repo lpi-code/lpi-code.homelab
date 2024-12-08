@@ -18,21 +18,21 @@
       usergroup: nextcloud
       uid: "{{ created_user.uid }}"
 
-- name: Create /opt/nextcloud
+- name: Create /opt/nextcloud dirs
   file:
-    path: /opt/nextcloud
+    path: /opt/nextcloud/{{ item }}
     state: directory
     owner: nextcloud
     group: nextcloud
     mode: 0755
+  with_items:
+    - config
+    - mnt
+    - data
+    - database
+    - redis
+    - nextcloud_html
 
-- name: Create /opt/nextcloud
-  file:
-    path: /opt/nextcloud/mnt
-    state: directory
-    owner: nextcloud
-    group: nextcloud
-    mode: 0755
 
 - name: Chown /mnt/main_datastore/nextcloud_data
   file:
@@ -41,14 +41,40 @@
     group: nextcloud
     mode: 0755
 
-- name: link /opt/nextcloud/data to /mnt/main_datastore/nextcloud_data
-  file:
+- name: Relabel mnt
+  sefcontext:
+    setype: container_file_t
+    target: "/opt/nextcloud/mnt"
+    state: present
+
+- name: bind mount /opt/nextcloud/data from /mnt/main_datastore/nextcloud_data
+  mount:
+    path: /opt/nextcloud/data
     src: /mnt/main_datastore/nextcloud_data
-    dest: /opt/nextcloud/data
-    state: link
-    owner: nextcloud
-    group: nextcloud
-    mode: 0755
+    opts: x-systemd.after=zfs-mount.service,bind,context=system_u:object_r:container_file_t:s0
+    state: mounted
+    fstype: none
+
+- name: Bind mount secondary mount to /opt/nextcloud/mnt
+  block:
+    - name: Create item mount point
+      file:
+        path: /opt/nextcloud/mnt/{{ item['name'] }}
+        state: directory
+        owner: nextcloud
+        group: nextcloud
+        mode: 0755
+      with_items: "{{ nextcloud_mounts }}"
+    - name: Bind mount item
+      mount:
+        path: /opt/nextcloud/mnt/{{ item['name'] }}
+        src: "{{ item['path'] }}"
+        opts: x-systemd.after=zfs-mount.service,bind,context=system_u:object_r:container_file_t:s0
+        state: mounted
+        fstype: none
+      with_items: "{{ nextcloud_mounts }}"
+  when: nextcloud_mounts is defined
+
 
 # - name: Create /opt/nextcloud/webroot
 #   file:
@@ -149,6 +175,8 @@
 
 - name: Fix permissions in nextcloud container
   shell: "sudo -u nextcloud /opt/nextcloud/nextcloud_helper.sh -f /opt/nextcloud/docker-compose.yml --fix-permissions"
+  tags:
+    - permissions-fix
 # run as nextcloud user
 # - name: Enable face recognition
 #   shell: "sudo -u nextcloud DOCKER_HOST=unix:///run/user/{{ nextcloud_user.uid }}/podman/podman.sock /usr/local/bin/docker-compose -f /opt/nextcloud/docker-compose.yml exec -T nextcloud php /var/www/html/occ face:setup --model 1"

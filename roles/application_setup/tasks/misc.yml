@@ -1,0 +1,73 @@
+- name: Set the user to create
+  ansible.builtin.set_fact:
+    user_to_setup: misc
+    group_to_setup: misc
+    homedir: /opt/misc
+
+- name: Setup misc user
+  ansible.builtin.include_tasks: setup_user.yml
+
+- name: Setting service information
+  ansible.builtin.set_fact:
+    service:
+      description: misc container service
+      userhome: "{{ homedir }}"
+      username: misc
+      usergroup: misc
+      uid: "{{ created_user.uid }}"
+
+- name: Template misc-compose.yml
+  ansible.builtin.template:
+    src: misc/misc-compose.yml.j2
+    dest: /opt/misc/docker-compose.yml
+    owner: misc
+    group: misc
+    mode: 0600
+
+- name: Template env file
+  ansible.builtin.template:
+    src: misc/misc.env.j2
+    dest: /opt/misc/.env
+    owner: misc
+    group: misc
+    mode: 0600
+
+- name: Create sql folder
+  ansible.builtin.file:
+    path: /opt/misc/sql
+    state: directory
+    owner: misc
+    group: misc
+    mode: '0755'
+
+- name: Template sql file
+  ansible.builtin.template:
+    src: misc/misc-init.sql.j2
+    dest: /opt/misc/sql/init.sql
+    owner: misc
+    group: misc
+    mode: 0755
+
+
+- name: Template misc service file
+  ansible.builtin.template:
+    src: generic_compose.service.j2
+    dest: /etc/systemd/system/misc.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: Reload systemd
+
+- name: Enable and start misc service
+  ansible.builtin.systemd:
+    name: misc
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
+
+#quick and dirty way to wait for the service to start
+- name: Wait 20 seconds for the service to start
+  shell: sleep 20
+
+- name: Run linkstack migration
+  ansible.builtin.shell: DOCKER_HOST=unix:///run/user/{{ created_user.uid }}/podman/podman.sock /usr/local/bin/docker-compose -f {{homedir}}/docker-compose.yml exec linkstack php82 artisan migrate 

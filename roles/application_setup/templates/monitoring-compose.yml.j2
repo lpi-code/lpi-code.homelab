@@ -33,7 +33,8 @@ services:
     image: ghcr.io/gethomepage/homepage:latest
     container_name: homepage
     volumes:
-      - ./homepage/config:/app/config:Z
-      - ./homepage/images:/app/public/images:Z
+      - ./homepage/config:/app/config:z
+      - ./homepage/images:/app/public/images:z
+      - ./monitored_fs:/monitored_fs:ro
     ports:
       - 3003:3000

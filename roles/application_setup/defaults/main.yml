@@ -1,2 +1,40 @@
 ---
 # defaults file for application_setup
+backup_dir:
+  - /opt/authentik/certs
+  - /opt/authentik/custom-templates
+  - /opt/authentik/data/database
+  - /opt/authentik/data/redis
+  - /opt/authentik/data
+  - /opt/authentik/media
+  - /opt/home-assistant/certs
+  - /opt/home-assistant/config
+  - /opt/home-assistant/config
+  - /opt/home-assistant/esphome
+  - /opt/home-assistant/fifo
+  - /opt/home-assistant/Scripts
+  - /opt/media_stack/config
+  - /opt/monitoring/freshrss
+  - /opt/monitoring/uptime_kuma_data
+  - /opt/monitoring/homepage
+  - /opt/nextcloud/nextcloud_html
+  - /opt/nextcloud/data
+  - /opt/nextcloud/database
+  - /opt/nextcloud/redis
+
+backup_dir_traversal:
+  - /opt/authentik
+  - /opt/home-assistant
+  - /opt/media_stack
+  - /opt/monitoring
+  - /opt/nextcloud
+
+backup_fifo_input: /fifo/input
+backup_fifo_output: /fifo/output
+
+backup_services:
+  - authentik
+  - home-assistant
+  - media_stack
+  - monitoring
+  - nextcloud

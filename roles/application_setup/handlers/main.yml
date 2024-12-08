@@ -8,3 +8,15 @@
 - name: Reload udev
   shell: udevadm control --reload-rules ; udevadm trigger
   listen: "Reload udev"
+
+- name: Reload avahi
+  shell: systemctl reload avahi-daemon
+  listen: "Reload avahi"
+
+- name: Reload sysctl
+  shell: sysctl -p
+  listen: "Reload sysctl"
+
+- name: Reload nsswitch
+  shell: systemctl reload nsswitch
+  listen: "Reload nsswitch"

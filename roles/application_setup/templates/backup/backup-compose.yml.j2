@@ -1,0 +1,49 @@
+version: "3.2"
+services:
+  backrest:
+    image: garethgeorge/backrest
+    container_name: backrest
+    hostname: backrest #Use this to set the hostname instead of container ID to the config.json and WebUI.
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./backrest/data:/data:Z,rw
+      - ./backrest/config:/config:Z,rw
+      - ./backrest/cache:/cache:Z,rw
+      - ./backrest/ssh:/root/.ssh:rw,Z
+      - ./fifo:/fifo:rwz
+{% for dir in backup_dir %}
+      - {{ dir }}:/backup{{ dir }}:ro
+{% endfor %}
+    environment:
+      - BACKREST_DATA=/data # path for backrest data. restic binary and the database are placed here.
+      - BACKREST_CONFIG=/config/config.json # path for the backrest config file.
+      - XDG_CACHE_HOME=/cache # path for the restic cache which greatly improves performance.
+    restart: unless-stopped
+    ports:
+      - 9898:9898
+    user: root:root # root is mapped to backup user on host to allow access to the backup data.
+    # disable selinux w
+
+  # Apple Time Machine
+  timemachine:
+    image: odarriba/timemachine
+    container_name: timemachine
+    hostname: timemachine
+    restart: unless-stopped
+    volumes:
+      - /opt/backup/apple_backup/:/timemachine:rwz
+      - /opt/backup/apple_backup_config/entrypoint.sh:/entrypoint.sh:ro
+    ports:
+      - "548:548" # AFP
+      - "636:636" # AFP over SSL
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      AFP_LOGIN: "${AFP_LOGIN:?err}"
+      AFP_PASSWORD: "${AFP_PASSWORD:?err}"
+      AFP_NAME: "${AFP_NAME:?err}"
+      AFP_SIZE_LIMIT: "${AFP_SIZE_LIMIT:?err}" # Optional
+      PUID: "${PUID:?err}"
+      PGID: "${PGID:?err}"

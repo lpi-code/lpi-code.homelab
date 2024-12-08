@@ -29,4 +29,6 @@ services:
       - /opt/home-assistant/esphome:/config:z
       - /etc/localtime:/etc/localtime:ro
     restart: always
+    ports:
+      - "6052:6052"
     

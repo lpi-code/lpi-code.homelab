@@ -36,3 +36,28 @@
   include_tasks: media_stack.yml
   tags:
     - media_stack
+
+- name: Install backup tools
+  include_tasks: backup.yml
+  tags:
+    - backup
+
+- name: Install misc
+  include_tasks: misc.yml
+  tags:
+    - misc
+
+- name: Install gitlab
+  include_tasks: gitlab.yml
+  tags:
+    - gitlab
+
+- name: Install cashfactory
+  include_tasks: cashfactory.yml
+  tags:
+    - cashfactory
+
+- name: Install game servers
+  include_tasks: game.yml
+  tags:
+    - game

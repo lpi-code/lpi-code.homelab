@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+import os
+import subprocess
+import time
+
+# Constants
+INPUT_FIFO_PATH = "/opt/backup/fifo/input"
+OUTPUT_FIFO_PATH = "/opt/backup/fifo/output"
+WHITELISTED_SERVICES = [
+{%for service in backup_services%}
+    "{{service}}",
+{%endfor%}
+]
+
+def read_fifo():
+    """Listen for commands from the input FIFO."""
+    while True:
+        with open(INPUT_FIFO_PATH, 'r') as fifo:
+            for line in fifo:
+                process_command(line.strip())
+
+def process_command(command):
+    """Process the command read from the FIFO."""
+    parts = command.split()
+    if len(parts) == 2 and parts[0] in WHITELISTED_SERVICES:
+        service_name, action = parts
+        if action in ['start', 'stop']:
+            manage_service(service_name, action)
+        else:
+            write_output("Error: Invalid action specified")
+    else:
+        write_output("Error: Invalid command format or service not whitelisted")
+
+def manage_service(service_name, action):
+    """Manage the service based on the action."""
+    try:
+        if action == "stop":
+            execute_command(f"sudo /usr/bin/systemctl stop {service_name}.service")
+            if service_name == "authentik":
+                execute_command(f"/opt/authentik/scripts/acl_mask_updater.sh")
+        elif action == "start":
+            execute_command(f"sudo /usr/bin/systemctl start {service_name}.service")
+        write_output(f"Success: {action} action completed for {service_name}")
+    except Exception as e:
+        write_output(f"Error: {str(e)}")
+
+def execute_command(command):
+    """Execute a system command securely."""
+    subprocess.run(command, shell=True, check=True)
+
+def write_output(message):
+    """Write a message to the output FIFO."""
+    with open(OUTPUT_FIFO_PATH, 'w') as fifo:
+        fifo.write(message + "\n")
+
+if __name__ == "__main__":
+    read_fifo()
